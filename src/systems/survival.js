@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, isLocked }) {
+export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, trees, solidObstacles, isLocked }) {
   const state = {
     health: 100, hunger: 100, thirst: 100, stamina: 100, sanity: 100,
     inventory: {}, discoveries: new Set(["Tropical Lowlands"]), journal: [],
@@ -32,6 +32,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     clean_water: ["Clean Water", "Safe drinking water."],
     dirty_water: ["Unfiltered Water", "May contain parasites."],
     log: ["Wood Log", "Heavy wood for building."],
+    axe: ["Stone Axe", "A basic tool for chopping down trees."],
     campfire: ["Campfire", "A place to cook food and stay warm."],
     shelter: ["Leaf Shelter", "A simple place to rest."]
   };
@@ -39,6 +40,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   const recipes = [
     { id: "rope", name: "Rope", needs: { fiber: 3 }, gives: 1, description: "Twist plant fibers together." },
     { id: "spear", name: "Wooden Spear", needs: { stick: 2, flint: 1, fiber: 2 }, gives: 1, description: "A basic hunting tool." },
+    { id: "axe", name: "Stone Axe", needs: { stick: 1, flint: 2, rope: 1 }, gives: 1, description: "A basic tool for chopping trees." },
     { id: "bow", name: "Primitive Bow", needs: { stick: 3, rope: 1 }, gives: 1, description: "A simple ranged tool." },
     { id: "arrow", name: "Arrows x3", needs: { stick: 1, feather: 2, flint: 1 }, gives: 3, description: "Three basic arrows." },
     { id: "bandage", name: "Bandage", needs: { fiber: 2, herb: 1 }, gives: 1, description: "A clean plant-fiber dressing." },
@@ -121,6 +123,16 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   ui.appendChild(panelRoot);
   const debugRoot = document.createElement("div");
   ui.appendChild(debugRoot);
+  topHud.style.display = "none";
+  hint.style.display = "none";
+  bottom.style.display = "none";
+  function syncHudVisibility() {
+    const visible = isLocked();
+    topHud.style.display = visible ? "block" : "none";
+    hint.style.display = visible ? "block" : "none";
+    bottom.style.display = visible ? "block" : "none";
+  }
+  document.addEventListener("pointerlockchange", syncHudVisibility);
 
   function notify(message) {
     state.message = message;
@@ -388,6 +400,11 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       best = resource;
       bestDistance = distance;
     }
+    for (const tree of trees) {
+      if (tree.harvested) continue;
+      const distance = origin.distanceTo(new THREE.Vector3(tree.x, terrainHeight(tree.x, tree.z) + 1, tree.z));
+      if (distance < bestDistance) { best = { kind: "tree", tree }; bestDistance = distance; }
+    }
     for (const object of placedObjects) {
       if (!object.active) continue;
       const distance = origin.distanceTo(object.mesh.position);
@@ -399,7 +416,16 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   function interact() {
     const target = nearestTarget();
     if (!target) { notify("Nothing close enough to interact with."); return; }
-    if (target.kind === "shelter") {
+    if (target.kind === "tree") {
+      if (count("axe") < 1) { notify("You need a crafted stone axe to chop this tree."); return; }
+      target.tree.harvested = true;
+      scene.remove(target.tree.group);
+      const obstacleIndex = solidObstacles.indexOf(target.tree.obstacle);
+      if (obstacleIndex >= 0) solidObstacles.splice(obstacleIndex, 1);
+      addItem("log", 3);
+      discover("Tree chopping", "A stone axe can harvest wood from large trees.");
+      notify("Tree chopped. Collected 3 wood logs.");
+    } else if (target.kind === "shelter") {
       openRest();
     } else if (target.kind === "water") {
       addItem("dirty_water", 1);
@@ -569,6 +595,9 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     action(spawn, "SPAWN JAGUAR", () => { makeAnimal("jaguar", camera.position.x + 8, camera.position.z - 8); });
     action(spawn, "SPAWN ARMADILLO", () => { makeAnimal("armadillo", camera.position.x + 5, camera.position.z - 5); });
     action(spawn, "SPAWN BIRD", () => { makeAnimal("bird", camera.position.x + 4, camera.position.z - 3); });
+    action(spawn, "SPAWN CAIMAN", () => { makeAnimal("caiman", camera.position.x + 7, camera.position.z - 6); });
+    action(spawn, "SPAWN FROG", () => { makeAnimal("frog", camera.position.x + 3, camera.position.z - 5); });
+    action(spawn, "SPAWN SNAKE", () => { makeAnimal("snake", camera.position.x + 5, camera.position.z - 7); });
     action(spawn, "SPAWN WATER", () => spawnWater(camera.position.x + 7, camera.position.z + 7));
     action(spawn, "PLACE CAMPFIRE", () => { state.inventory.campfire = Math.max(1, count("campfire")); placeBuild("campfire"); });
     action(spawn, "PLACE SHELTER", () => { state.inventory.shelter = Math.max(1, count("shelter")); placeBuild("shelter"); });
