@@ -471,6 +471,71 @@ This is a development sequence, not permission to skip testing or implement ever
 - Preserve the intended realism, systemic depth, and diegetic presentation.
 - The designer has authorized repository edits. Make careful, reviewable changes, inspect current code before editing, and validate builds after code changes.
 
+
+
+## 17. New approved systems — parasite lifecycle, predator pressure, and footprint
+
+These mechanics extend the existing ecology, survival, wildlife, and faction canon. They must be implemented as interacting systems, not isolated status effects.
+
+### 17.1 Amoebic infestation — The Internal Siphon
+
+- Exposure route: drinking untreated swamp or otherwise contaminated water. The prototype's unfiltered-water interaction is the first implementation entry point.
+- Initial infection chance: 35% per untreated-water exposure, subject to balance testing.
+- Incubation: 12 game-hours before the active phase.
+- Active effect: incoming carbohydrate value is reduced by 40% before the player's existing hunger/nutrient recovery is applied.
+- Feedback: intermittent abdominal discomfort and a smartwatch diagnostic such as “ERR: BIO-LEAK.” The display should signal a problem without making the watch omniscient.
+- Do not force a sudden camera snap or interrupt precision movement. Use a brief, bounded discomfort cue and optional aim sway that remains controllable.
+- The parasite lifecycle is modeled separately from the legacy generic parasite meter so additional pathogen types can be added without mixing their rules.
+
+### 17.2 Botfly-like subcutaneous parasite — The Living Flesh
+
+This is a fictional, non-graphic survival condition. It is not a medical simulation.
+
+- Exposure may occur after sustained unprotected contact with a high-scent environment or after unsafe rest conditions are implemented.
+- Initial exposure target: 10 continuous unsheltered minutes.
+- Development: 48 game-hours.
+- Body inspection identifies the affected limb through a localized, non-graphic visual indicator.
+- Treatment is a multi-stage game interaction: apply fictional resin, wait 2 game-hours, then complete a brief non-graphic extraction interaction.
+- Treatment stages are explicit states so interruptions, persistence, and multiplayer synchronization can be added later.
+- The current prototype contains the lifecycle model and developer test controls. Natural carcass-scent and bare-ground-rest exposure triggers, plus the physical body-inspection interface, remain later integration tasks.
+
+### 17.3 Predator stalking and threat evaluation
+
+Jaguars should use a state machine rather than arbitrary waypoint wandering:
+- Roaming and territory search.
+- Detection and evidence gathering.
+- Silent shadowing from brush or suitable elevated routes.
+- Threat evaluation based on player movement, condition, equipment, visibility, and escape routes.
+- A clear warning/commitment phase before an attack.
+- Retreat when the player establishes a strong fire barrier or breaks line of sight and escapes the immediate threat zone.
+
+Predators do not literally cancel their sound footprint or perfectly match player footsteps. They remain quiet through behavior and environmental cover, but observant players should receive fair audio/visual clues. Player condition may influence predator interest but must not produce unavoidable attacks against an injured player. Fire discourages approach; it is not a universal instant-delete button.
+
+### 17.4 Micro-fauna ground hazards
+
+Ant columns and similar dense ground fauna are regional hazards. They should be visible and avoidable, with protective clothing or mud barriers reducing exposure. Contact creates a temporary movement/comfort penalty and a fictional toxicity or irritation state. Avoid forced, uninterruptible animations and instant catastrophic damage; the player must retain meaningful control and escape options.
+
+### 17.5 Industrial smoke and air pollution
+
+Industrial structures emit persistent smoke into regional air state. Emissions accumulate in the relevant regional cell and disperse or decay according to weather and wind. The player can see smoke above the canopy in suitable conditions.
+
+- Initial pollution threshold: 50.
+- Initial sustained exposure threshold: 48 game-hours above that value.
+- Sef-Ilun stance can escalate from observant to hostile after sustained, locally detected pollution.
+- This is not an omniscient global switch. Scouts must detect and report the plume; knowledge propagates through faction communication.
+- Hostility can lead to surveillance, warnings, sabotage, raids, or attacks on exposed infrastructure. A raid must be telegraphed and have counterplay; destruction of a base is not automatic.
+- The prototype now has a pollution accumulator, decay, threshold timer, and Sef-Ilun response state. Actual kiln/furnace emitters and faction scouts are future integration points.
+
+### 17.6 Scent vector matrix
+
+Scent sources include carcasses, exposed raw food, and unburied organic waste. Wind projects scent downwind as a directional, weakening corridor rather than a perfect circle. AI receives approximate scent strength and direction, not exact player coordinates.
+
+The prototype now includes a tested downwind-corridor calculation. Connecting it to persistent carcass/waste sources, weather wind, and wildlife/faction receivers is a subsequent integration task.
+
+### 17.7 Implementation boundaries
+
+The new lifecycle and pollution logic is modular and covered by unit tests. Developer controls can exercise the new states before their world interactions exist. Do not mistake a test control or data model for a fully implemented physical interaction, faction, or wildlife behavior.
+
 ## 16. Current implementation status
 
 This document records intended design, not current feature completion.
