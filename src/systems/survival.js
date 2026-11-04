@@ -382,7 +382,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     }
     group.position.set(x, terrainHeight(x, z), z);
     scene.add(group);
-    animals.push({ type, mesh: group, hp: type === "jaguar" ? 70 : 35, speed: type === "jaguar" ? 1.7 : rand(0.5, 1.2), direction: rand(0, Math.PI * 2), timer: rand(2, 7), alive: true, attackCooldown: 0 });
+    animals.push({ type, mesh: group, hp: type === "jaguar" ? 70 : 35, speed: type === "jaguar" ? 1.7 : rand(0.5, 1.2), direction: rand(0, Math.PI * 2), timer: rand(2, 7), alive: true, attackCooldown: 0, aiState: "roaming", warningTimer: 0 });
   }
   for (let i = 0; i < 16; i++) {
     const x = rand(-worldSize * 0.4, worldSize * 0.4), z = rand(-worldSize * 0.4, worldSize * 0.4);
@@ -644,13 +644,59 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       const dx = camera.position.x - animal.mesh.position.x;
       const dz = camera.position.z - animal.mesh.position.z;
       const distance = Math.hypot(dx, dz);
-      if ((animal.type === "jaguar" && distance < 9) || (animal.type === "caiman" && distance < 2.0) || (animal.type === "snake" && distance < 1.5)) {
+
+      if (animal.type === "jaguar") {
+        let fireDistance = Infinity;
+        for (const object of placedObjects) {
+          if (!object.active || object.kind !== "fire") continue;
+          fireDistance = Math.min(fireDistance, Math.hypot(
+            animal.mesh.position.x - object.mesh.position.x,
+            animal.mesh.position.z - object.mesh.position.z
+          ));
+        }
+        const playerSprinting = Math.hypot(player.velocity.x, player.velocity.z) > 5.5;
+        const previousState = animal.aiState;
+        const nextState = advanceJaguarState(animal, { distance, fireDistance, playerSprinting }, delta);
+        if (nextState === "warning" && previousState !== "warning") {
+          notify("A heavy movement in the brush. Something is tracking you.");
+        }
+        if (nextState === "retreating") {
+          animal.direction = Math.atan2(-dx, -dz);
+        } else if (nextState === "stalking") {
+          const forwardX = -Math.sin(player.yaw);
+          const forwardZ = -Math.cos(player.yaw);
+          const targetX = camera.position.x - forwardX * 6;
+          const targetZ = camera.position.z - forwardZ * 6;
+          animal.direction = Math.atan2(targetX - animal.mesh.position.x, targetZ - animal.mesh.position.z);
+        } else if (nextState === "warning" || nextState === "pouncing") {
+          animal.direction = Math.atan2(dx, dz);
+        } else if (animal.timer <= 0) {
+          animal.timer = rand(2, 7);
+          animal.direction += rand(-1.7, 1.7);
+        }
+        if (nextState === "pouncing" && distance < 1.8 && animal.attackCooldown <= 0) {
+          animal.attackCooldown = 4;
+          damagePlayer(8, "The jaguar catches you in a sudden encounter. Break away and find cover.");
+          animal.aiState = "retreating";
+        }
+        const speed = nextState === "retreating" ? 4.2 : nextState === "pouncing" ? 5.0 : nextState === "stalking" ? 1.25 : nextState === "warning" ? 0.15 : animal.speed * 0.45;
+        const nx = animal.mesh.position.x + Math.sin(animal.direction) * speed * delta;
+        const nz = animal.mesh.position.z + Math.cos(animal.direction) * speed * delta;
+        if (Math.abs(nx) < worldSize * 0.47 && Math.abs(nz) < worldSize * 0.47) {
+          animal.mesh.position.x = nx;
+          animal.mesh.position.z = nz;
+          animal.mesh.position.y = terrainHeight(nx, nz);
+        }
+        animal.mesh.rotation.y = animal.direction + Math.PI;
+        continue;
+      }
+
+      if ((animal.type === "caiman" && distance < 2.0) || (animal.type === "snake" && distance < 1.5)) {
         animal.direction = Math.atan2(dx, dz);
-        const attackRange = animal.type === "jaguar" ? 1.9 : animal.type === "caiman" ? 1.8 : 1.35;
+        const attackRange = animal.type === "caiman" ? 1.8 : 1.35;
         if (distance < attackRange && animal.attackCooldown <= 0) {
           animal.attackCooldown = 3.5;
-          const damage = animal.type === "jaguar" ? 8 : animal.type === "caiman" ? 7 : 4;
-          damagePlayer(damage, "A " + animal.type + " injured you! Move away.");
+          damagePlayer(animal.type === "caiman" ? 7 : 4, "A " + animal.type + " startled you. Move away.");
         }
       } else if (distance < 7 && animal.type !== "caiman") {
         animal.direction = Math.atan2(-dx, -dz);
@@ -658,7 +704,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
         animal.timer = rand(2, 7);
         animal.direction += rand(-1.7, 1.7);
       }
-      const speed = animal.type === "jaguar" && distance < 9 ? animal.speed : animal.speed * (distance < 7 ? 1.4 : 0.45);
+      const speed = animal.speed * (distance < 7 ? 1.4 : 0.45);
       const nx = animal.mesh.position.x + Math.sin(animal.direction) * speed * delta;
       const nz = animal.mesh.position.z + Math.cos(animal.direction) * speed * delta;
       if (Math.abs(nx) < worldSize * 0.47 && Math.abs(nz) < worldSize * 0.47) {
