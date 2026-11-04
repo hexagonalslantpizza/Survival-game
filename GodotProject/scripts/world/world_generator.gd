@@ -17,6 +17,7 @@ func _ready() -> void:
 	_create_materials()
 	_create_terrain()
 	_create_forest()
+	_create_boundaries()
 
 static func _hash_noise(x: int, z: int) -> float:
 	var n: int = (x * 374761393 + z * 668265263 + WORLD_SEED) & 0xffffffff
@@ -251,3 +252,19 @@ func _create_rock(x: float, z: float, scale_factor: float) -> void:
 	collision.shape = sphere
 	body.add_child(collision)
 	group.add_child(body)
+
+func _create_boundaries() -> void:
+	_add_boundary(Vector3(-HALF_WORLD - 1.0, 20.0, 0.0), Vector3(2.0, 60.0, WORLD_SIZE + 4.0))
+	_add_boundary(Vector3(HALF_WORLD + 1.0, 20.0, 0.0), Vector3(2.0, 60.0, WORLD_SIZE + 4.0))
+	_add_boundary(Vector3(0.0, 20.0, -HALF_WORLD - 1.0), Vector3(WORLD_SIZE + 4.0, 60.0, 2.0))
+	_add_boundary(Vector3(0.0, 20.0, HALF_WORLD + 1.0), Vector3(WORLD_SIZE + 4.0, 60.0, 2.0))
+
+func _add_boundary(boundary_position: Vector3, boundary_size: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.position = boundary_position
+	var collision := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = boundary_size
+	collision.shape = box
+	body.add_child(collision)
+	add_child(body)
