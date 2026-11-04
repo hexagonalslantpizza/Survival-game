@@ -114,6 +114,7 @@ const rockMaterials = [
 ];
 
 const solidObstacles = [];
+const trees = [];
 const sharedTrunkGeometry = new THREE.CylinderGeometry(1, 1.28, 1, 12, 3);
 const sharedRootGeometry = new THREE.ConeGeometry(1, 1, 5);
 const sharedCanopyGeometry = new THREE.IcosahedronGeometry(1, 3);
@@ -160,7 +161,9 @@ function addTree(x, z, scale, random) {
     group.add(crown);
   }
   scene.add(group);
-  solidObstacles.push({ x, z, radius: radius * scale + 0.5 });
+  const obstacle = { x, z, radius: radius * scale + 0.5 };
+  solidObstacles.push(obstacle);
+  trees.push({ group, x, z, obstacle, harvested: false });
 }
 function addFern(x, z, scale, random) {
   const y = terrainHeight(x, z) + 0.06;
@@ -259,7 +262,7 @@ const player = {
 };
 const keys = new Set();
 let locked = false;
-const survival = createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize: WORLD_SIZE, isLocked: () => locked });
+const survival = createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize: WORLD_SIZE, trees, solidObstacles, isLocked: () => locked });
 let lastTime = performance.now();
 
 function requestLock() {
