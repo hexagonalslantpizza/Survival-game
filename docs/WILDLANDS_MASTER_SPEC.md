@@ -555,7 +555,7 @@ The player's physical notebook begins completely blank. It does not contain a re
 
 The notebook records what the character has actually learned. It is not an omniscient crafting menu. Entries should appear as rough field sketches with material notes, observed proportions, and later refinements. Repeating a discovery does not create duplicate entries. A failed experiment may still consume time or materials where appropriate, but it must not silently reveal the correct recipe.
 
-The initial recipe catalog is authored in `src/systems/knowledge.js`. The discovery model is implemented and unit-tested, but it is not yet connected to the physical backpack crafting mat or the in-world notebook presentation. The existing prototype crafting panel remains legacy UI until that physical interaction is built; it must not be mistaken for the final design.
+The initial recipe catalog is authored in `src/systems/knowledge.js`. The discovery model is implemented and unit-tested, but it is not yet connected to the physical backpack crafting mat or the in-world notebook presentation. The old pre-unlocked recipe menu has been removed; the temporary crafting panel now explicitly reports that the notebook is blank and the physical hand-assembly system is not yet available.
 
 ### 19.2 Hand-assembly mat and primitive technology
 
@@ -589,4 +589,4 @@ Metallurgy is a sequential infrastructure progression: clay and fired bricks, ch
 
 - Implemented: blank notebook data model; recipe catalog; exact ingredient-set discovery; world-action/specimen/knowledge/milestone discovery triggers; duplicate prevention; automated tests.
 - Not yet implemented: physical slate crafting mat, seated hand assembly, item placement/manipulation, notebook UI and sketch rendering, complete item catalog, liquid containers, four-macro nutrient ingestion, the food-specific effect system, charcoal kiln/furnace structures, and the complete metallurgy chain.
-- The prototype's current generic craft panel and simplified hunger value are temporary scaffolding. They do not supersede this approved design.
+- The prototype's current informational crafting panel and simplified hunger value are temporary scaffolding. They do not supersede this approved design.
