@@ -27,15 +27,23 @@ The long-term goal is a survival experience with systems such as:
 
 ## What currently works?
 
-The current milestone includes:
+The current playable prototype includes:
 
-- Procedurally generated rolling terrain
-- Tropical trees, ferns, and rocks
-- Lighting, shadows, and distance fog
-- First-person camera and mouse look
-- WASD movement
-- Sprinting
-- Start and pause menus
+- Procedurally generated rolling terrain, tropical trees, ferns, and rocks
+- First-person camera, mouse look, walking, and sprinting
+- Health, hunger, thirst, stamina, and sanity
+- Resource gathering and an inventory
+- Crafting recipes for rope, spear, bow, arrows, bandages, campfires, and shelters
+- Wild fruit, coconuts, medicinal herbs, stones, flint, sticks, and plant fiber
+- Freshwater pools, unsafe water, and boiling water at a campfire
+- Hunting and harvesting basic wildlife
+- Cooking raw meat at a campfire
+- Wounds, infection progression, parasites, and basic treatments
+- A field journal for discoveries
+- A day/night cycle and a testable rain weather state
+- A developer debug menu opened with F3
+
+**Still not implemented:** multiplayer, PvP networking, full tree chopping, advanced animal animations/behaviors, full disease variety, advanced construction, and final itch.io release packaging. The wildlife models and survival rules are early prototypes and need playtesting.
 
 ---
 
@@ -236,6 +244,15 @@ You do not need to repeat `npm install` every time.
 | WASD | Move |
 | Mouse | Look around |
 | Shift | Sprint |
+| E | Gather, collect water, cook, or interact |
+| I or Tab | Inventory |
+| C | Crafting |
+| J | Field journal |
+| B | Build mode |
+| 1 | Place campfire while in build mode |
+| 2 | Place shelter while in build mode |
+| Left mouse | Hunt with a spear, or bow and arrow |
+| F3 | Open/close developer debug menu |
 | Esc | Pause and release the mouse |
 
 ## Mouse and pause behavior
@@ -244,6 +261,27 @@ You do not need to repeat `npm install` every time.
 - The game captures your mouse so you can look around.
 - Press Esc to pause and release the mouse.
 - Use the pause screen to return to the game.
+- Inventory, crafting, and journal panels release the mouse so their buttons can be clicked. Close a panel with its CLOSE button or Esc, then click RETURN TO GAME.
+
+## F3 developer debug menu
+
+Press **F3** while playing to open the developer panel. It releases the mouse so you can use the controls.
+
+The current debug panel includes:
+- Direct sliders for health, hunger, thirst, stamina, sanity, infection, parasites, wetness, time of day, and day number.
+- God mode and survival simulation toggles.
+- Easy, normal, and hard difficulty selection.
+- Clear/rain weather selection.
+- Spawn selected inventory items or a large batch of materials.
+- Spawn wildlife and freshwater pools.
+- Place a campfire or shelter for testing.
+- Teleport to the starting area or a random location.
+- Advance to the next day.
+- Add wounds, infection, parasites, or player damage.
+- Heal the player, reset survival stats, clear inventory, or reset counters.
+- A live readout of player position, wildlife, resources, inventory, survival conditions, FPS, draw calls, and triangle count.
+
+Debug changes are temporary and are not saved. F3 is a development/testing tool, not a multiplayer admin system.
 
 ---
 
@@ -366,12 +404,12 @@ Here is what the important files do:
 The game is being built in stages so each system can be tested before more systems depend on it.
 
 1. **World foundation** — terrain, vegetation, rocks, movement, and camera.
-2. **Survival** — health, hunger, thirst, stamina, sanity, and sleep.
-3. **Items and crafting** — inventory, gathering, materials, tools, and recipes.
-4. **Biology and injuries** — wounds, infections, parasites, diseases, treatments, and medicinal plants.
-5. **Wildlife** — animal behavior, encounters, and hunting.
-6. **Construction** — fires, shelters, ropes, and base building.
-7. **Journal and difficulty** — discoveries, information, and difficulty settings.
+2. **Expanded survival** — deeper health, hunger, thirst, stamina, sanity, sleep, and environmental effects.
+3. **Expanded items and crafting** — more inventory items, gathering, tools, and recipes.
+4. **Biology and injuries** — more wound types, infection, parasites, diseases, treatments, and medicinal plants.
+5. **Wildlife** — improved animal models, behavior, encounters, and hunting.
+6. **Construction** — more fires, shelters, ropes, and base building.
+7. **Journal and difficulty** — more discoveries, information, and balanced difficulty settings.
 8. **Multiplayer and release preparation** — networking, PvP, testing, and itch.io preparation.
 
 These are planned stages. A feature should not be considered playable until it has actually been implemented and tested.
