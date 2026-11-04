@@ -613,6 +613,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     action(testing, "RESET SURVIVAL STATS", () => { state.health=100;state.hunger=100;state.thirst=100;state.stamina=100;state.sanity=100;state.infection=0;state.parasites=0;state.wounds=[]; });
     action(testing, "CLEAR INVENTORY", () => { state.inventory = {}; });
     action(testing, "RESET COUNTERS", () => { state.kills=0;state.gathered=0;state.crafted=0; });
+    action(testing, "RESET WORLD / RELOAD", () => { window.location.reload(); });
     const readout = box("LIVE READOUT");
     const read = document.createElement("pre"); read.id = "debug-readout"; read.style.cssText = "white-space:pre-wrap;color:#cbd8bd;font-size:11px;line-height:1.5"; readout.appendChild(read);
     debugRoot.appendChild(panel);
@@ -782,6 +783,11 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   document.addEventListener("keydown", keydown);
   document.addEventListener("mousedown", click);
 
+  function applyFallDamage(impactSpeed) {
+    const damage = Math.min(45, Math.max(0, (impactSpeed - 12) * 3.2));
+    if (damage > 0) damagePlayer(damage, "Hard landing! You injured yourself.");
+  }
+
   function update(delta, frameDelta = delta) {
     state.fps = frameDelta > 0 ? 1 / frameDelta : 0;
     updateSurvival(delta);
@@ -806,5 +812,5 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     style.remove();
   }
 
-  return { update, canSprint, sprintMultiplier, consumeSprint, dispose, state };
+  return { update, canSprint, sprintMultiplier, consumeSprint, applyFallDamage, dispose, state };
 }
