@@ -21,7 +21,11 @@ export function absorbCarbohydrates(ecology, amount) {
 }
 
 export function exposeToBotflyScent(ecology, minutes, shelteredBySmoke = false) {
-  if (shelteredBySmoke || ecology.botfly.phase !== "clear") return false;
+  if (ecology.botfly.phase !== "clear") return false;
+  if (shelteredBySmoke || !(minutes > 0)) {
+    ecology.botfly.exposureMinutes = 0;
+    return false;
+  }
   ecology.botfly.exposureMinutes += Math.max(0, Number(minutes) || 0);
   if (ecology.botfly.exposureMinutes < 10) return false;
   ecology.botfly.phase = "developing";
