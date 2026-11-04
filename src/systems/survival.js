@@ -1,13 +1,13 @@
 import * as THREE from "three";
 
-export function createSurvivalSystems({ scene, camera, player, terrainHeight, worldSize, isLocked }) {
+export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, isLocked }) {
   const state = {
     health: 100, hunger: 100, thirst: 100, stamina: 100, sanity: 100,
     inventory: {}, discoveries: new Set(["Tropical Lowlands"]), journal: [],
     wounds: [], infection: 0, parasites: 0, day: 1, time: 8.5,
     difficulty: "normal", survivalEnabled: true, godMode: false,
     showInventory: false, activePanel: "", buildMode: "", message: "Explore. Press E near something to interact.",
-    messageTime: 5, kills: 0, gathered: 0, crafted: 0, damageTaken: 0,
+    messageTime: 5, kills: 0, gathered: 0, crafted: 0, damageTaken: 0, fps: 0,
     thirstDamageTimer: 0, hungerDamageTimer: 0, infectionTimer: 0,
     temperature: 28, wetness: 0, fireCount: 0, weather: "clear"
   };
@@ -523,6 +523,8 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     slider(conditions, "Infection", "infection", 0, 100);
     slider(conditions, "Parasites", "parasites", 0, 100);
     slider(conditions, "Wetness", "wetness", 0, 100);
+    slider(conditions, "Time of day", "time", 0, 24);
+    slider(conditions, "Day number", "day", 1, 365);
     const flags = box("GAME RULES");
     action(flags, state.godMode ? "GOD MODE: ON" : "GOD MODE: OFF", () => { state.godMode = !state.godMode; toggleDebug(); toggleDebug(); });
     action(flags, state.survivalEnabled ? "SURVIVAL: ON" : "SURVIVAL: OFF", () => { state.survivalEnabled = !state.survivalEnabled; toggleDebug(); toggleDebug(); });
@@ -683,7 +685,8 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
       "Inventory types: " + Object.keys(state.inventory).filter(k => count(k)>0).length,
       "Wounds: " + state.wounds.length + " | Infection: " + state.infection.toFixed(1) + " | Parasites: " + state.parasites.toFixed(1),
       "Animals harvested: " + state.kills + " | Gather actions: " + state.gathered + " | Crafts: " + state.crafted,
-      "Difficulty: " + state.difficulty + " | Survival: " + state.survivalEnabled + " | God mode: " + state.godMode
+      "Difficulty: " + state.difficulty + " | Survival: " + state.survivalEnabled + " | God mode: " + state.godMode,
+      "FPS: " + state.fps.toFixed(0) + " | Draw calls: " + (renderer ? renderer.info.render.calls : 0) + " | Triangles: " + (renderer ? renderer.info.render.triangles : 0)
     ].join("\\n");
   }
 
@@ -714,12 +717,13 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
   document.addEventListener("mousedown", click);
 
   function update(delta) {
+    state.fps = delta > 0 ? 1 / delta : 0;
     updateSurvival(delta);
     updateAnimals(delta);
     renderHud();
   }
   function canSprint() { return !state.survivalEnabled || state.stamina > 1; }
-  function sprintMultiplier() { return state.survivalEnabled ? (state.stamina > 0 ? 1 : 0.65) : 1; }
+  function sprintMultiplier() { return state.survivalEnabled ? (state.stamina > 0 ? 1 : player.speed / player.sprintSpeed) : 1; }
   function consumeSprint(delta, sprinting) {
     if (!state.survivalEnabled || !sprinting) return;
     state.stamina = Math.max(0, state.stamina - delta * 16);
