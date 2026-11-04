@@ -7,7 +7,6 @@ const startScreen = document.querySelector("#start-screen");
 const pauseScreen = document.querySelector("#pause-screen");
 const startButton = document.querySelector("#start-button");
 const resumeButton = document.querySelector("#resume-button");
-const hud = document.querySelector("#hud");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9aa99a);
@@ -278,7 +277,6 @@ document.addEventListener("pointerlockchange", () => {
   locked = document.pointerLockElement === renderer.domElement;
   startScreen.classList.toggle("hidden", locked || hasStarted);
   pauseScreen.classList.toggle("hidden", locked || !hasStarted);
-  hud.classList.toggle("active", locked);
   if (locked) hasStarted = true;
   else keys.clear();
 });
@@ -298,7 +296,7 @@ document.addEventListener("mousemove", (event) => {
 });
 
 document.addEventListener("pointerlockerror", () => {
-  document.querySelector("#status-message").textContent = "Click ENTER THE FOREST to begin.";
+  document.querySelector(".subtitle").textContent = "Pointer lock was blocked. Click ENTER THE FOREST again.";
 });
 
 function updatePlayer(delta) {
