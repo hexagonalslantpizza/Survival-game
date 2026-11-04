@@ -2,3 +2,9 @@ node_modules/
 dist/
 .vite/
 .DS_Store
+.godot/
+.import/
+.export/
+.export_presets.cfg
+*.translation
+*.tmp
