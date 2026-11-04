@@ -692,7 +692,6 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       const previousAmoebicPhase = state.ecology.amoebic.phase;
       advanceEcology(state.ecology, delta * 0.025);
       if (previousAmoebicPhase === "incubating" && state.ecology.amoebic.phase === "active") {
-        state.parasites = Math.max(state.parasites, 20);
         notify("Your stomach cramps. Your smartwatch reports ERR: BIO-LEAK.");
       }
     }
