@@ -10,7 +10,8 @@ import {
   emitIndustrialSmoke,
   advanceEcology,
   calculateDownwindScent,
-  advanceJaguarState
+  advanceJaguarState,
+  shouldSpawnJaguar
 } from "../src/systems/ecology.js";
 
 test("amoebic infestation incubates for twelve game-hours", () => {
