@@ -259,7 +259,7 @@ const player = {
 };
 const keys = new Set();
 let locked = false;
-const survival = createSurvivalSystems({ scene, camera, player, terrainHeight, worldSize: WORLD_SIZE, isLocked: () => locked });
+const survival = createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize: WORLD_SIZE, isLocked: () => locked });
 let lastTime = performance.now();
 
 function requestLock() {
