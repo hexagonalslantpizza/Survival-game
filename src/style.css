@@ -40,15 +40,7 @@ button {
 button:hover { background: #c2d0ad; border-color: #c2d0ad; transform: translateY(-2px); }
 .controls-note { color: #9ba69a; font-size: 11px; margin: 28px 0 0; letter-spacing: .025em; }
 .controls-note span { color: #c5d1b2; padding: 0 8px; }
-#hud { position: fixed; inset: 0; pointer-events: none; z-index: 2; opacity: 0; transition: opacity .25s; }
-#hud.active { opacity: 1; }
-.location-label { position: absolute; top: 28px; left: 32px; font-size: 10px; font-weight: 700; letter-spacing: .19em; color: rgba(244, 243, 231, .78); text-shadow: 0 1px 8px #000; }
-.location-label span { color: #b8c99c; padding: 0 7px; }
-.crosshair { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,.82); box-shadow: 0 0 5px rgba(0,0,0,.6); transform: translate(-50%, -50%); }
-#status-message { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); color: rgba(245,244,233,.72); font-size: 11px; letter-spacing: .06em; text-shadow: 0 1px 8px #000; white-space: nowrap; }
-
 @media (max-width: 600px) {
   .menu-panel { padding: 30px 8px; }
   .controls-note { line-height: 2; }
-  .location-label { top: 18px; left: 18px; font-size: 9px; }
 }
