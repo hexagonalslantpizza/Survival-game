@@ -22,7 +22,10 @@ static func create_notebook_state() -> Dictionary:
 	return {"discovered_recipe_ids": {}, "entries": [], "discovered_specimens": {}, "discovered_knowledge": {}}
 
 static func get_recipe_catalog() -> Array[Dictionary]:
-	return RECIPE_CATALOG.duplicate(true)
+	var result: Array[Dictionary] = []
+	for recipe in RECIPE_CATALOG:
+		result.append(recipe.duplicate(true))
+	return result
 
 static func _same_ingredient_set(actual: Dictionary, required: Dictionary) -> bool:
 	var actual_keys: Array = []
@@ -80,4 +83,7 @@ static func record_notebook_discovery(notebook: Dictionary, discovery_type: Stri
 	return false
 
 static func get_notebook_entries(notebook: Dictionary) -> Array[Dictionary]:
-	return notebook["entries"].duplicate(true)
+	var result: Array[Dictionary] = []
+	for entry in notebook["entries"]:
+		result.append(entry.duplicate(true))
+	return result
