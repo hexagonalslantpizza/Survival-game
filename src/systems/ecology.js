@@ -93,3 +93,46 @@ export function calculateDownwindScent(source, observer, wind, maxDistance = 100
   const lateralFactor = 1 - crosswindDistance / corridorWidth;
   return Math.max(0, Math.min(1, distanceFactor * lateralFactor * (source.intensity ?? 1)));
 }
+
+export function advanceJaguarState(animal, context, delta) {
+  const distance = Math.max(0, context.distance);
+  const fireDistance = Number.isFinite(context.fireDistance) ? context.fireDistance : Infinity;
+  const sprinting = Boolean(context.playerSprinting);
+  animal.aiState ??= "roaming";
+  animal.warningTimer ??= 0;
+
+  if (fireDistance < 7) {
+    animal.aiState = "retreating";
+    animal.warningTimer = 0;
+    return animal.aiState;
+  }
+  if (animal.aiState === "retreating") {
+    if (distance > 28 && fireDistance > 10) animal.aiState = "roaming";
+    return animal.aiState;
+  }
+  if (distance > 22) {
+    animal.aiState = "roaming";
+    animal.warningTimer = 0;
+    return animal.aiState;
+  }
+  if (animal.aiState === "pouncing") return animal.aiState;
+  if (animal.aiState === "warning") {
+    animal.warningTimer = Math.max(0, animal.warningTimer - Math.max(0, delta));
+    if (distance > 10) {
+      animal.aiState = "stalking";
+      animal.warningTimer = 0;
+    } else if (animal.warningTimer === 0 && (sprinting || distance < 5.5)) {
+      animal.aiState = "pouncing";
+    } else if (animal.warningTimer === 0) {
+      animal.aiState = "stalking";
+    }
+    return animal.aiState;
+  }
+  if (distance < 6) {
+    animal.aiState = "warning";
+    animal.warningTimer = 2.5;
+  } else {
+    animal.aiState = "stalking";
+  }
+  return animal.aiState;
+}
