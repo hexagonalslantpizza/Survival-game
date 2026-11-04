@@ -144,3 +144,7 @@ export function advanceJaguarState(animal, context, delta) {
   }
   return animal.aiState;
 }
+
+export function shouldSpawnJaguar({ isNight, existingJaguarCount }, random = Math.random) {
+  return Boolean(isNight) && existingJaguarCount === 0 && random() < 0.03;
+}
