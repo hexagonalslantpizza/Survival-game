@@ -344,10 +344,11 @@ function updatePlayer(delta) {
 
 function animate(now) {
   requestAnimationFrame(animate);
-  const delta = Math.min((now - lastTime) / 1000, 0.05);
+  const frameDelta = (now - lastTime) / 1000;
+  const delta = Math.min(frameDelta, 0.05);
   lastTime = now;
   if (locked) {
-    survival.update(delta);
+    survival.update(delta, frameDelta);
     updatePlayer(delta);
   }
   renderer.render(scene, camera);
