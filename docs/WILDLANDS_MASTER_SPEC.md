@@ -590,3 +590,65 @@ Metallurgy is a sequential infrastructure progression: clay and fired bricks, ch
 - Implemented: blank notebook data model; recipe catalog; exact ingredient-set discovery; world-action/specimen/knowledge/milestone discovery triggers; duplicate prevention; automated tests.
 - Not yet implemented: physical slate crafting mat, seated hand assembly, item placement/manipulation, notebook UI and sketch rendering, complete item catalog, liquid containers, four-macro nutrient ingestion, the food-specific effect system, charcoal kiln/furnace structures, and the complete metallurgy chain.
 - The prototype's current informational crafting panel and simplified hunger value are temporary scaffolding. They do not supersede this approved design.
+
+
+## 20. Apex paranoia cycle and irreversible taboo consequence
+
+### 20.1 Sustained Phase 3 sanity state
+
+Phase 3 begins only after sanity remains below 15% for 20 continuous real-time seconds. Brief dips do not immediately trigger the full effect. Sanity recovering above 20% gradually unwinds the low-sanity timer; the presentation ends when the phase drops below 3. This hysteresis prevents rapid flickering around a threshold.
+
+At Phase 3, the game may layer several unreliable-sense effects:
+- The normal jungle ambience is intended to recede into a restrained low-frequency pressure tone. The current prototype adds a quiet synthesized hum; there is no existing full jungle ambience mixer to fade yet.
+- A delayed, low-volume footstep-like sound is synthesized about 0.4 seconds after player movement. It is a designed imitation cue, not a recording or exact duplicate of the character's actual footsteps. Stereo panning alternates sides; it is not true rear-channel spatial audio.
+- A faint shadow silhouette can appear in peripheral vision. It is removed immediately if the player turns it into the central 60-degree view, and it also expires after a short interval. These are visual hallucination actors, not enemy NPCs and cannot attack.
+- The survival diagnostic panel adopts a dark crimson warning treatment and reports a corrupted biometric signal. This is a prototype presentation of the intended diegetic smartwatch behavior, not the finished wrist-mounted device.
+
+The system should never force a rapid camera rotation, blur the player's controls, or rely on strobing/flashing. Audio and visual intensity should remain configurable and should not drown out important gameplay cues.
+
+### 20.2 Apex paranoia implementation status
+
+Implemented in `src/systems/terror.js` and integrated into the survival prototype:
+- Sustained low-sanity phase progression with recovery hysteresis.
+- Low hum and delayed synthetic movement cue when browser audio is available.
+- Short-lived peripheral shadow silhouette that vanishes when centered.
+- Crimson diagnostic-panel state.
+- Automated tests for phase timing, recovery, irreversible taboo state, and peripheral visibility.
+
+Not yet implemented:
+- A real jungle ambience mix to fade, since the prototype currently has no ambient audio system.
+- Actual recorded player footsteps/breathing to duplicate; the current cue is synthesized.
+- Full 3D rear-channel audio positioning.
+- A final physical smartwatch model and screen.
+- Separate detailed shadow meshes for each faction or animal archetype.
+
+### 20.3 Taboo ingestion: permanent world-state consequence
+
+If a future ingestion system allows the player to consume the raw remains of a fallen hostile person, this is treated as a unique, irreversible narrative threshold rather than an ordinary food item. The consequence state permanently changes the character's vocal profile and places all three fictional factions into a shared ecosystem-wide pursuit stance. The factions cease routine scout behavior and begin an abstract, persistent hunt simulation that can operate across the world's vertical layers.
+
+The pursuit is driven by the world simulation's accumulated evidence and faction memory, not omniscient knowledge of the player's exact position. Scent, smoke, and disturbance are inputs to the simulation, with uncertainty, decay, and opportunities to break contact. Do not implement tactical real-world pursuit instructions or detailed attack choreography. Keep encounters non-graphic and preserve readable escape/avoidance gameplay.
+
+The irreversible state transition is modeled and unit-tested in `src/systems/terror.js`, but it is not yet connected to a human-remains item, ingestion, vocal audio, faction AI, or a full multi-layer world simulation. No such gameplay effect should be claimed as implemented until those systems exist.
+
+## 21. WILDLANDS core dependency map
+
+The architecture should be event-driven and use explicit state ownership. The following is the approved dependency direction; downstream systems subscribe to events rather than reaching into unrelated systems' internal state.
+
+```ini
+[WILDLANDS CORE SPECIFICATION - LOCAL HOST PC]
+SimulationType=Endless_Hardcore_Survival
+VictoryCondition=None
+TargetPlatform=Desktop_PC
+AIPriority=Evidence_Based_Acoustic_Scent_Tracking
+
+[SYSTEM DEPENDENCIES]
+Weather.MonsoonSurge -> Terrain.MudAccumulation -> Player.MovementAndInjuryRisk
+Player.SmelterSmoke -> Canopy.AirPollutionLoad -> Faction.SefIlunStance
+Player.RawIngestion -> Digestion.IncubationAndToxins -> Biometrics.NutrientAndConditionState
+Player.Sanity -> Terror.PhaseState -> Audio.MimicAndHum
+Terror.PhaseState -> Scene.PeripheralShadowActors
+Player.TabooIngestion -> Character.VoiceProfile -> Faction.SharedPursuitState
+World.ScentAndDisturbanceEvidence -> WildlifeAndFaction.Investigation
+```
+
+The dependency map is a design contract, not a claim that every arrow is currently connected. Each system should publish typed events, own its own state, and avoid circular imports. World-time progression, persistence, and server authority remain the long-term source of truth for multiplayer.
