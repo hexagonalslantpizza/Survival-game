@@ -85,3 +85,10 @@ test("botfly exposure resets when the player leaves the scent zone or reaches sm
   assert.equal(ecology.botfly.exposureMinutes, 0);
   assert.equal(ecology.botfly.phase, "clear");
 });
+
+test("jaguars only receive a rare spawn check at night when none are active", () => {
+  assert.equal(shouldSpawnJaguar({ isNight: false, existingJaguarCount: 0 }, () => 0), false);
+  assert.equal(shouldSpawnJaguar({ isNight: true, existingJaguarCount: 1 }, () => 0), false);
+  assert.equal(shouldSpawnJaguar({ isNight: true, existingJaguarCount: 0 }, () => 0.02), true);
+  assert.equal(shouldSpawnJaguar({ isNight: true, existingJaguarCount: 0 }, () => 0.5), false);
+});
