@@ -32,7 +32,7 @@ The current playable prototype includes:
 - Procedurally generated rolling terrain, tropical trees, ferns, and rocks
 - First-person camera, mouse look, walking, and sprinting
 - Health, hunger, thirst, stamina, and sanity
-- Resource gathering and an inventory
+- Resource gathering, basic tree chopping with a stone axe, and an inventory
 - Crafting recipes for rope, spear, bow, arrows, bandages, campfires, and shelters
 - Wild fruit, coconuts, medicinal herbs, stones, flint, sticks, and plant fiber
 - Freshwater pools, unsafe water, and boiling water at a campfire
@@ -43,7 +43,7 @@ The current playable prototype includes:
 - A day/night cycle and a testable rain weather state
 - A developer debug menu opened with F3
 
-**Still not implemented:** multiplayer, PvP networking, full tree chopping, advanced animal animations/behaviors, full disease variety, advanced construction, and final itch.io release packaging. The wildlife models and survival rules are early prototypes and need playtesting.
+**Still not implemented:** multiplayer, PvP networking, advanced animal animations/behaviors, a full range of disease types, advanced construction, and final itch.io release packaging. The wildlife models and survival rules are early prototypes and need playtesting.
 
 ---
 
@@ -244,7 +244,7 @@ You do not need to repeat `npm install` every time.
 | WASD | Move |
 | Mouse | Look around |
 | Shift | Sprint |
-| E | Gather, collect water, cook, or interact |
+| E | Gather, chop trees (with an axe), collect water, cook, or interact |
 | I or Tab | Inventory |
 | C | Crafting |
 | J | Field journal |
