@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#17231d" />
+    <meta name="description" content="A first-person tropical wilderness survival game." />
+    <title>WILDLANDS — Survival</title>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="start-screen" class="screen">
+      <div class="menu-panel">
+        <div class="eyebrow">A WILDERNESS SURVIVAL EXPERIENCE</div>
+        <h1>WILDLANDS</h1>
+        <p class="subtitle">The forest is alive. Learn to live in it.</p>
+        <button id="start-button">ENTER THE FOREST</button>
+        <p class="controls-note">WASD to move <span>•</span> Mouse to look <span>•</span> Shift to run <span>•</span> Esc to pause</p>
+      </div>
+    </div>
+    <div id="pause-screen" class="screen hidden">
+      <div class="menu-panel compact">
+        <div class="eyebrow">WILDERNESS SURVIVAL</div>
+        <h2>PAUSED</h2>
+        <button id="resume-button">RETURN TO GAME</button>
+        <p class="controls-note">Press Esc to resume</p>
+      </div>
+    </div>
+    <div id="hud">
+      <div class="location-label">TROPICAL LOWLANDS <span>•</span> UNCHARTED</div>
+      <div class="crosshair"></div>
+      <div id="status-message">Find your way through the forest.</div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
