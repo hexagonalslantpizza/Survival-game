@@ -55,6 +55,13 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   topHud.style.display = "none";
   hint.style.display = "none";
   bottom.style.display = "none";
+  function syncHudVisibility() {
+    const visible = isLocked();
+    topHud.style.display = visible ? "block" : "none";
+    hint.style.display = visible ? "block" : "none";
+    bottom.style.display = visible ? "block" : "none";
+  }
+  document.addEventListener("pointerlockchange", syncHudVisibility);
 
   const style = document.createElement("style");
   style.textContent = [
@@ -83,6 +90,19 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     "@media(max-width:600px){.surv-top{top:54px;left:10px;width:190px}.surv-panel{padding:14px}.surv-bottom{bottom:45px}}"
   ].join("\\n");
   document.head.appendChild(style);
+
+  const rainCount = 420;
+  const rainPositions = new Float32Array(rainCount * 3);
+  for (let i = 0; i < rainCount; i++) {
+    rainPositions[i * 3] = camera.position.x + rand(-22, 22);
+    rainPositions[i * 3 + 1] = camera.position.y + rand(4, 26);
+    rainPositions[i * 3 + 2] = camera.position.z + rand(-22, 22);
+  }
+  const rainGeometry = new THREE.BufferGeometry();
+  rainGeometry.setAttribute("position", new THREE.BufferAttribute(rainPositions, 3));
+  const rain = new THREE.Points(rainGeometry, new THREE.PointsMaterial({ color: 0xb8d8e4, size: 0.075, transparent: true, opacity: 0.55, depthWrite: false }));
+  rain.visible = false;
+  scene.add(rain);
 
   const topHud = document.createElement("div");
   topHud.className = "surv-top";
@@ -612,6 +632,22 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     }
   }
 
+  function updateRain(delta) {
+    rain.visible = state.weather === "rain";
+    if (!rain.visible) return;
+    const positions = rain.geometry.attributes.position.array;
+    for (let i = 0; i < rainCount; i++) {
+      const offset = i * 3;
+      positions[offset + 1] -= delta * 19;
+      if (positions[offset + 1] < camera.position.y - 3 || Math.abs(positions[offset] - camera.position.x) > 24 || Math.abs(positions[offset + 2] - camera.position.z) > 24) {
+        positions[offset] = camera.position.x + rand(-22, 22);
+        positions[offset + 1] = camera.position.y + rand(5, 25);
+        positions[offset + 2] = camera.position.z + rand(-22, 22);
+      }
+    }
+    rain.geometry.attributes.position.needsUpdate = true;
+  }
+
   function updateSurvival(delta) {
     state.time += delta * 0.025;
     if (state.time >= 24) { state.time -= 24; state.day += 1; }
@@ -719,6 +755,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   function update(delta) {
     state.fps = delta > 0 ? 1 / delta : 0;
     updateSurvival(delta);
+    updateRain(delta);
     updateAnimals(delta);
     renderHud();
   }
@@ -731,6 +768,10 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   function dispose() {
     document.removeEventListener("keydown", keydown);
     document.removeEventListener("mousedown", click);
+    document.removeEventListener("pointerlockchange", syncHudVisibility);
+    scene.remove(rain);
+    rain.geometry.dispose();
+    rain.material.dispose();
     ui.remove();
     style.remove();
   }
