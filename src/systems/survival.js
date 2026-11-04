@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { createNotebookState } from "./knowledge.js";
 import { createEcologyState, exposeToAmoebicParasite, absorbCarbohydrates, advanceEcology, emitIndustrialSmoke, exposeToBotflyScent, applyResinToBotfly, completeBotflyExtraction, advanceJaguarState, shouldSpawnJaguar } from "./ecology.js";
+import { createTerrorState, advanceTerrorState, shouldShowPeripheralActor } from "./terror.js";
 
 export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, trees, solidObstacles, isLocked }) {
   const state = {
@@ -12,7 +13,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     messageTime: 5, kills: 0, gathered: 0, crafted: 0, damageTaken: 0, fps: 0,
     thirstDamageTimer: 0, hungerDamageTimer: 0, infectionTimer: 0,
     temperature: 28, wetness: 0, fireCount: 0, weather: "clear",
-    ecology: createEcologyState()
+    ecology: createEcologyState(), terror: createTerrorState()
   };
 
   const itemInfo = {
@@ -56,6 +57,12 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   const placedObjects = [];
   const scentSources = [];
   let jaguarSpawnCheckTimer = 0;
+  let shadowSpawnTimer = 10;
+  let mimicStepTimer = 0;
+  let terrorAudio = null;
+  let terrorHum = null;
+  let terrorHumGain = null;
+  let shadowActor = null;
   const ui = document.createElement("div");
   ui.id = "survival-ui";
   document.body.appendChild(ui);
@@ -83,9 +90,128 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     ".debug-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0;font-size:11px}.debug-row input[type=range]{width:105px}.debug-row input[type=number],.debug-row select{width:100px;background:#1e2c22;color:#fff;border:1px solid #63765c;padding:5px}",
     ".debug-actions{display:flex;gap:5px;flex-wrap:wrap}.debug-actions button{font-size:10px;padding:7px 9px}",
     ".surv-toast{position:absolute;top:18%;left:50%;transform:translateX(-50%);background:#101a13e8;border:1px solid #a4b98d;padding:9px 14px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .2s}",
+    ".surv-top.terror-watch{background:rgba(35,5,8,.88);border-color:#8d2834;box-shadow:0 0 18px #7d142433}",
+    ".surv-top.terror-watch .watch-label{color:#ef7b83!important}",
     "@media(max-width:600px){.surv-top{top:54px;left:10px;width:190px}.surv-panel{padding:14px}.surv-bottom{bottom:45px}}"
   ].join("\n");
   document.head.appendChild(style);
+
+  function ensureTerrorAudio() {
+    if (terrorAudio) {
+      if (terrorAudio.state === "suspended") terrorAudio.resume().catch(() => {});
+      return;
+    }
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    try {
+      terrorAudio = new AudioContextClass();
+      terrorHum = terrorAudio.createOscillator();
+      terrorHum.type = "sine";
+      terrorHum.frequency.value = 46;
+      terrorHumGain = terrorAudio.createGain();
+      terrorHumGain.gain.value = 0;
+      terrorHum.connect(terrorHumGain);
+      terrorHumGain.connect(terrorAudio.destination);
+      terrorHum.start();
+    } catch {
+      terrorAudio = null;
+    }
+  }
+
+  function playMimicFootstep() {
+    if (!terrorAudio || terrorAudio.state !== "running") return;
+    const length = Math.floor(terrorAudio.sampleRate * 0.11);
+    const buffer = terrorAudio.createBuffer(1, length, terrorAudio.sampleRate);
+    const channel = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
+    const source = terrorAudio.createBufferSource();
+    source.buffer = buffer;
+    const filter = terrorAudio.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 190;
+    const gain = terrorAudio.createGain();
+    gain.gain.value = 0.12;
+    const pan = terrorAudio.createStereoPanner();
+    pan.pan.value = Math.random() < 0.5 ? -0.72 : 0.72;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(pan);
+    pan.connect(terrorAudio.destination);
+    const when = terrorAudio.currentTime + 0.4;
+    source.start(when);
+    source.stop(when + 0.12);
+  }
+
+  function removeShadowActor() {
+    if (!shadowActor) return;
+    scene.remove(shadowActor.mesh);
+    shadowActor.mesh.traverse(object => {
+      if (object.geometry) object.geometry.dispose();
+      if (object.material) object.material.dispose();
+    });
+    shadowActor = null;
+  }
+
+  function spawnShadowActor() {
+    removeShadowActor();
+    const bearing = player.yaw + (Math.random() < 0.5 ? -1 : 1) * rand(0.62, 1.05);
+    const distance = rand(10, 15);
+    const x = camera.position.x + Math.sin(bearing) * distance;
+    const z = camera.position.z + Math.cos(bearing) * distance;
+    const group = new THREE.Group();
+    const material = new THREE.MeshBasicMaterial({ color: 0x090d0a, transparent: true, opacity: 0.42, depthWrite: false });
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 1.05, 3, 5), material);
+    body.position.y = 1.05;
+    group.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.29, 7, 6), material);
+    head.position.y = 1.92;
+    group.add(head);
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.8, 5), material);
+    leftLeg.position.set(-0.16, 0.42, 0);
+    group.add(leftLeg);
+    const rightLeg = leftLeg.clone();
+    rightLeg.position.x = 0.16;
+    group.add(rightLeg);
+    group.position.set(x, terrainHeight(x, z), z);
+    group.rotation.y = bearing + Math.PI;
+    scene.add(group);
+    shadowActor = { mesh: group, lifetime: rand(2.5, 5.5) };
+  }
+
+  function updateTerror(delta) {
+    const previousPhase = state.terror.phase;
+    advanceTerrorState(state.terror, state.sanity, delta);
+    if (state.terror.phase === 3) {
+      ensureTerrorAudio();
+      if (terrorHumGain && terrorAudio?.state === "running") terrorHumGain.gain.setTargetAtTime(0.035, terrorAudio.currentTime, 1.2);
+      const moving = Math.hypot(player.velocity.x, player.velocity.z) > 1.0;
+      mimicStepTimer -= delta;
+      if (moving && mimicStepTimer <= 0) {
+        mimicStepTimer = 0.48;
+        playMimicFootstep();
+      }
+      shadowSpawnTimer -= delta;
+      if (!shadowActor && shadowSpawnTimer <= 0) {
+        shadowSpawnTimer = rand(11, 19);
+        spawnShadowActor();
+      }
+      if (shadowActor) {
+        shadowActor.lifetime -= delta;
+        const dx = shadowActor.mesh.position.x - camera.position.x;
+        const dz = shadowActor.mesh.position.z - camera.position.z;
+        const bearing = Math.atan2(dx, dz);
+        shadowActor.mesh.visible = shouldShowPeripheralActor(player.yaw, bearing, 60);
+        if (!shadowActor.mesh.visible || shadowActor.lifetime <= 0) removeShadowActor();
+      }
+    } else {
+      if (terrorHumGain && terrorAudio?.state === "running") terrorHumGain.gain.setTargetAtTime(0, terrorAudio.currentTime, 0.6);
+      mimicStepTimer = 0;
+      shadowSpawnTimer = Math.max(shadowSpawnTimer, 5);
+      removeShadowActor();
+    }
+    if (previousPhase !== 3 && state.terror.phase === 3) notify("Your senses become unreliable. The smartwatch signal is failing.");
+    else if (previousPhase === 3 && state.terror.phase !== 3) notify("The pressure in your ears eases. Your senses begin to settle.");
+  }
 
   const rainCount = 420;
   const rainPositions = new Float32Array(rainCount * 3);
@@ -102,7 +228,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
 
   const topHud = document.createElement("div");
   topHud.className = "surv-top";
-  topHud.innerHTML = '<div style="font-size:10px;letter-spacing:.16em;color:#bdcba9;margin-bottom:9px">SURVIVAL STATUS</div><div id="surv-bars"></div><div id="surv-conditions" style="font-size:10px;color:#d0b98e;margin-top:8px"></div>';
+  topHud.innerHTML = '<div class="watch-label" style="font-size:10px;letter-spacing:.16em;color:#bdcba9;margin-bottom:9px">SURVIVAL STATUS</div><div id="surv-bars"></div><div id="surv-conditions" style="font-size:10px;color:#d0b98e;margin-top:8px"></div>';
   ui.appendChild(topHud);
   const hint = document.createElement("div");
   hint.className = "surv-hint";
@@ -801,6 +927,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       if (wound.age > 90) state.infection = Math.min(100, state.infection + delta * 0.025);
     }
     state.sanity = Math.max(0, state.sanity - (state.time > 20 || state.time < 5 ? delta * 0.035 : 0));
+    updateTerror(delta);
   }
 
   function renderHud() {
@@ -813,6 +940,9 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     const colors = { health:"#bd7468", hunger:"#c7a66b", thirst:"#76a9bb", stamina:"#a9c48c", sanity:"#9b91bd" };
     const barRoot = document.getElementById("surv-bars");
     if (barRoot) barRoot.innerHTML = bars.map(key => '<div class="surv-stat"><span>' + labels[key] + '</span><div class="surv-track"><div class="surv-fill" style="width:' + state[key] + '%;background:' + colors[key] + '"></div></div><b>' + Math.round(state[key]) + '</b></div>').join("");
+    topHud.classList.toggle("terror-watch", state.terror.watchCorrupted);
+    const watchLabel = topHud.querySelector(".watch-label");
+    if (watchLabel) watchLabel.textContent = state.terror.watchCorrupted ? "BIOMETRIC SIGNAL // ERR" : "SURVIVAL STATUS";
     const cond = document.getElementById("surv-conditions");
     if (cond) {
       const tags = [];
@@ -841,6 +971,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       "Wounds: " + state.wounds.length + " | Infection: " + state.infection.toFixed(1) + " | Parasites: " + state.parasites.toFixed(1),
       "Amoebic: " + state.ecology.amoebic.phase + " (" + state.ecology.amoebic.incubationHoursRemaining.toFixed(1) + "h) | Botfly: " + state.ecology.botfly.phase,
       "Carcass scent sources: " + scentSources.length,
+      "Terror phase: " + state.terror.phase + " | Low-sanity duration: " + state.terror.lowSanitySeconds.toFixed(1) + "s | Taboo state: " + state.terror.tabooConsumed,
       "Air pollution: " + state.ecology.airPollutionLoad.toFixed(1) + " | Above threshold: " + state.ecology.hoursAbovePollutionThreshold.toFixed(1) + "h | Sef-Ilun: " + state.ecology.sefIlunStance,
       "Animals harvested: " + state.kills + " | Gather actions: " + state.gathered + " | Crafts: " + state.crafted,
       "Difficulty: " + state.difficulty + " | Survival: " + state.survivalEnabled + " | God mode: " + state.godMode,
@@ -898,6 +1029,9 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     document.removeEventListener("mousedown", click);
     document.removeEventListener("pointerlockchange", syncHudVisibility);
     scene.remove(rain);
+    removeShadowActor();
+    if (terrorHum) terrorHum.stop();
+    if (terrorAudio) terrorAudio.close().catch(() => {});
     rain.geometry.dispose();
     rain.material.dispose();
     ui.remove();
