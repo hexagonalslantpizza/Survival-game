@@ -545,3 +545,48 @@ This document records intended design, not current feature completion.
 The existing repository is an early prototype with a small procedural terrain area, first-person movement, basic survival values, gathering/crafting, simple wildlife, basic weather, a field journal, and a developer debug panel. The prototype architecture is not yet the final architecture described above.
 
 The current prototype must be audited before any major refactor. Keep working behavior where useful, but do not preserve monolithic structures merely for compatibility if they prevent the approved architecture. Changes should be staged, testable, and reversible.
+
+
+## 19. Blank field notebook, experimental crafting, and unrestricted ingestion
+
+### 19.1 Notebook discovery rules
+
+The player's physical notebook begins completely blank. It does not contain a recipe list, tutorial recipes, or automatically revealed crafting instructions. A recipe is sketched into the notebook only after the player performs its discovery condition in the world: experimentally combining the relevant objects on a physical crafting mat, performing a meaningful world interaction, learning a technique, reaching a production milestone, or discovering a relevant specimen.
+
+The notebook records what the character has actually learned. It is not an omniscient crafting menu. Entries should appear as rough field sketches with material notes, observed proportions, and later refinements. Repeating a discovery does not create duplicate entries. A failed experiment may still consume time or materials where appropriate, but it must not silently reveal the correct recipe.
+
+The initial recipe catalog is authored in `src/systems/knowledge.js`. The discovery model is implemented and unit-tested, but it is not yet connected to the physical backpack crafting mat or the in-world notebook presentation. The existing prototype crafting panel remains legacy UI until that physical interaction is built; it must not be mistaken for the final design.
+
+### 19.2 Hand-assembly mat and primitive technology
+
+Primitive crafting is performed while seated, using a flat stone work surface and objects physically removed from the backpack. The player arranges and manipulates individual assets rather than selecting a recipe button. Discovery and production are separate: learning a recipe records it in the notebook, while crafting later requires the actual materials and a suitable work surface.
+
+Approved recipe concepts include the Split Stone Blade, Primitive Stone Spear, Heavy Bone Spear, Fire-Hardened Bamboo Spear, Primitive Recurve Bow, Fledgling Arrows, Split Coconut Bowls, Canteen Flask, Crude Mud Shovel, Primitive Fire-Drill Board, Unfired Clay Brick, Mud Charcoal Kiln, High-Tier Draft Furnace, and Forged Iron Axe. Their item combinations, material counts, discovery triggers, durability, and gameplay roles are authored as game data. They are fictional inventory interactions, not real-world toolmaking instructions.
+
+The primitive spear and bow families have distinct handling and stamina costs. Thrown objects use game-physics trajectories and environmental wind. Equipment balance, durability, and performance must be validated through playtesting rather than assumed from a recipe name.
+
+### 19.3 Containers and liquid persistence
+
+Liquids and loose materials must exist in physical containers. Split coconut bowls can collect rainwater; a gourd flask carries a limited volume and may leak if damaged. Water quality is a property of the liquid instance and container history, not a generic inventory label that can be ignored. Boiling, rain collection, contamination, storage, evaporation, and leakage should update the contained liquid state.
+
+### 19.4 Unrestricted biological ingestion
+
+Any biological matter object may be selected for ingestion. The interaction is never blocked by an arbitrary "Cannot Eat" message. The player may choose to swallow an unsuitable, toxic, contaminated, or unripe object; the simulation then applies its authored nutrient changes, toxins, pathogens, digestive response, and delayed consequences. The game should communicate uncertainty through specimen appearance, learned notebook observations, character reactions, and smartwatch diagnostics—not through a universal edible/not-edible gate.
+
+Raw and cooked forms are separate item states with separate effect profiles. The initial authored examples include raw and cooked peccary flesh, raw and smoked piranha, ripe and unripe Monstera fruit, Glowing Mycena, tree-bark beetle larvae, and a fictionalized toxic dart frog specimen. Effects are fictional gameplay values, not real nutritional or medical information. Real-world species biology must not be presented as a reliable guide to these fictional outcomes.
+
+### 19.5 Biometric consequences and presentation
+
+Ingestion updates the character's nutrient and hydration model immediately, then schedules delayed conditions where applicable. Pathogen incubation, parasite nutrient theft, toxin accumulation, digestive upset, sensory changes, and recovery all use the central game clock and persistent state. Smartwatch diagnostics may show concise warnings such as `ERR: BIO-LEAK`, while the notebook records only discoveries the character has earned.
+
+Severe effects should remain intense without graphic injury imagery, disorienting forced camera spins, or unavoidable motion effects. Neurotoxicity and other critical conditions may cause abstract incapacitation and a clearly signaled health emergency. The player should receive readable feedback and a fair opportunity to understand the system; no real-world treatment advice is implied.
+
+### 19.6 Metallurgy progression
+
+Metallurgy is a sequential infrastructure progression: clay and fired bricks, charcoal production, a draft furnace, ore processing, molds, and forged tools. Each stage requires the relevant physical structure and learned knowledge. Smoke, fuel use, heat, noise, and waste feed into the environmental-footprint simulation and can be noticed by wildlife and factions. Temperature targets and production outcomes are abstract game simulation values, not real-world furnace operating guidance.
+
+### 19.7 Implementation status
+
+- Implemented: blank notebook data model; recipe catalog; exact ingredient-set discovery; world-action/specimen/knowledge/milestone discovery triggers; duplicate prevention; automated tests.
+- Not yet implemented: physical slate crafting mat, seated hand assembly, item placement/manipulation, notebook UI and sketch rendering, complete item catalog, liquid containers, four-macro nutrient ingestion, the food-specific effect system, charcoal kiln/furnace structures, and the complete metallurgy chain.
+- The prototype's current generic craft panel and simplified hunger value are temporary scaffolding. They do not supersede this approved design.
