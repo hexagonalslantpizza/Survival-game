@@ -112,51 +112,65 @@ const rockMaterials = [
   new THREE.MeshStandardMaterial({ color: 0x656b62, roughness: 1 })
 ];
 
+const solidObstacles = [];
+const sharedTrunkGeometry = new THREE.CylinderGeometry(1, 1.28, 1, 12, 3);
+const sharedRootGeometry = new THREE.ConeGeometry(1, 1, 5);
+const sharedCanopyGeometry = new THREE.IcosahedronGeometry(1, 3);
+const sharedFernMaterial = fernMaterials[1];
+const sharedRockGeometry = new THREE.IcosahedronGeometry(1, 3);
+
 function addTree(x, z, scale, random) {
   const y = terrainHeight(x, z);
   const group = new THREE.Group();
   group.position.set(x, y, z);
   group.scale.setScalar(scale);
-  const height = 8 + random() * 7;
-  const radius = 0.38 + random() * 0.25;
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.72, radius * 1.35, height, 12, 3), trunkMaterial);
+  const height = 9 + random() * 8;
+  const radius = 0.42 + random() * 0.24;
+
+  const trunk = new THREE.Mesh(sharedTrunkGeometry, trunkMaterial);
+  trunk.scale.set(radius, height, radius);
   trunk.position.y = height / 2;
   trunk.castShadow = true;
   trunk.receiveShadow = true;
   group.add(trunk);
 
-  for (let r = 0; r < 4; r++) {
-    const angle = r * Math.PI / 2 + random() * 0.4;
-    const root = new THREE.Mesh(new THREE.ConeGeometry(0.42, 3.5, 5), barkLight);
-    root.position.set(Math.cos(angle) * 0.95, 0.55, Math.sin(angle) * 0.95);
+  for (let r = 0; r < 3; r++) {
+    const angle = r * Math.PI * 2 / 3 + random() * 0.35;
+    const root = new THREE.Mesh(sharedRootGeometry, barkLight);
+    root.position.set(Math.cos(angle) * 0.8, 0.48, Math.sin(angle) * 0.8);
+    root.scale.set(0.32, 3.0, 0.32);
     root.rotation.z = Math.cos(angle) * 0.42;
     root.rotation.x = Math.sin(angle) * 0.42;
     root.castShadow = true;
     group.add(root);
   }
 
-  const crownY = height + 1.1;
-  const crownCount = 7 + Math.floor(random() * 4);
+  const crownY = height + 1.3;
+  const crownCount = 4 + Math.floor(random() * 2);
   for (let i = 0; i < crownCount; i++) {
     const crown = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(2.3 + random() * 1.5, 2),
+      sharedCanopyGeometry,
       leafMaterials[Math.floor(random() * leafMaterials.length)]
     );
-    crown.position.set((random() - 0.5) * 5.5, crownY + (random() - 0.5) * 3.2, (random() - 0.5) * 5.5);
-    crown.scale.set(1.15, 0.75 + random() * 0.3, 1.05);
+    crown.position.set((random() - 0.5) * 4.8, crownY + (random() - 0.5) * 2.8, (random() - 0.5) * 4.8);
+    crown.scale.set(2.0 + random() * 0.7, 1.5 + random() * 0.6, 1.9 + random() * 0.7);
     crown.castShadow = true;
     crown.receiveShadow = true;
     group.add(crown);
   }
   scene.add(group);
+  solidObstacles.push({ x, z, radius: radius * scale + 0.5 });
 }
-
 function addFern(x, z, scale, random) {
   const y = terrainHeight(x, z) + 0.06;
   const group = new THREE.Group();
   group.position.set(x, y, z);
   group.scale.setScalar(scale);
   const leafCount = 9 + Math.floor(random() * 5);
+  const verts = [];
+  const indices = [];
+  const segments = 12;
+
   for (let i = 0; i < leafCount; i++) {
     const angle = (i / leafCount) * Math.PI * 2 + random() * 0.18;
     const length = 1.0 + random() * 1.15;
@@ -167,35 +181,34 @@ function addFern(x, z, scale, random) {
       new THREE.Vector3(Math.cos(angle) * length, length * 0.12, Math.sin(angle) * length)
     ];
     const curve = new THREE.QuadraticBezierCurve3(points[0], points[1], points[2]);
-    const verts = [];
-    const indices = [];
-    const segments = 12;
+    const side = new THREE.Vector3(-Math.sin(angle), 0.08, Math.cos(angle)).normalize();
+    const vertexOffset = verts.length / 3;
+
     for (let j = 0; j <= segments; j++) {
       const t = j / segments;
       const p = curve.getPoint(t);
       const w = Math.sin(Math.PI * t) * width;
-      const side = new THREE.Vector3(-Math.sin(angle), 0.08, Math.cos(angle)).normalize();
       verts.push(p.x + side.x * w, p.y + w * 0.28, p.z + side.z * w);
       verts.push(p.x - side.x * w, p.y - w * 0.28, p.z - side.z * w);
       if (j < segments) {
-        const a = j * 2;
+        const a = vertexOffset + j * 2;
         indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
       }
     }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-    const leaf = new THREE.Mesh(geometry, fernMaterials[Math.floor(random() * fernMaterials.length)]);
-    leaf.castShadow = true;
-    group.add(leaf);
   }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const leaves = new THREE.Mesh(geometry, sharedFernMaterial);
+  leaves.frustumCulled = true;
+  group.add(leaves);
   scene.add(group);
 }
-
 function addRock(x, z, scale, random) {
   const rock = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(1, 3),
+    sharedRockGeometry,
     rockMaterials[Math.floor(random() * rockMaterials.length)]
   );
   rock.position.set(x, terrainHeight(x, z) + scale * 0.38, z);
@@ -204,6 +217,7 @@ function addRock(x, z, scale, random) {
   rock.castShadow = true;
   rock.receiveShadow = true;
   scene.add(rock);
+  solidObstacles.push({ x, z, radius: scale * 0.72 + 0.35 });
 }
 
 function seededRandomFactory(initial) {
@@ -215,13 +229,13 @@ function seededRandomFactory(initial) {
 }
 
 const random = seededRandomFactory(seed);
-for (let i = 0; i < 150; i++) {
+for (let i = 0; i < 95; i++) {
   const x = (random() - 0.5) * (WORLD_SIZE - 18);
   const z = (random() - 0.5) * (WORLD_SIZE - 18);
   if (Math.hypot(x, z) < 12) continue;
   addTree(x, z, 0.8 + random() * 0.75, random);
 }
-for (let i = 0; i < 560; i++) {
+for (let i = 0; i < 260; i++) {
   const x = (random() - 0.5) * (WORLD_SIZE - 10);
   const z = (random() - 0.5) * (WORLD_SIZE - 10);
   if (Math.hypot(x, z) < 7) continue;
@@ -255,10 +269,11 @@ resumeButton.addEventListener("click", requestLock);
 
 document.addEventListener("pointerlockchange", () => {
   locked = document.pointerLockElement === renderer.domElement;
-  startScreen.classList.toggle("hidden", locked);
+  startScreen.classList.toggle("hidden", locked || hasStarted);
   pauseScreen.classList.toggle("hidden", locked || !hasStarted);
   hud.classList.toggle("active", locked);
   if (locked) hasStarted = true;
+  else keys.clear();
 });
 let hasStarted = false;
 
@@ -293,10 +308,25 @@ function updatePlayer(delta) {
   player.velocity.x = THREE.MathUtils.damp(player.velocity.x, direction.x * speed, 12, delta);
   player.velocity.z = THREE.MathUtils.damp(player.velocity.z, direction.z * speed, 12, delta);
 
-  camera.position.x += player.velocity.x * delta;
-  camera.position.z += player.velocity.z * delta;
-  camera.position.x = THREE.MathUtils.clamp(camera.position.x, -HALF_WORLD + 3, HALF_WORLD - 3);
-  camera.position.z = THREE.MathUtils.clamp(camera.position.z, -HALF_WORLD + 3, HALF_WORLD - 3);
+  let nextX = camera.position.x + player.velocity.x * delta;
+  let nextZ = camera.position.z + player.velocity.z * delta;
+  nextX = THREE.MathUtils.clamp(nextX, -HALF_WORLD + 3, HALF_WORLD - 3);
+  nextZ = THREE.MathUtils.clamp(nextZ, -HALF_WORLD + 3, HALF_WORLD - 3);
+
+  for (const obstacle of solidObstacles) {
+    const dx = nextX - obstacle.x;
+    const dz = nextZ - obstacle.z;
+    const minDistance = obstacle.radius + 0.38;
+    const distanceSq = dx * dx + dz * dz;
+    if (distanceSq < minDistance * minDistance) {
+      const distance = Math.sqrt(distanceSq) || 0.001;
+      nextX = obstacle.x + (dx / distance) * minDistance;
+      nextZ = obstacle.z + (dz / distance) * minDistance;
+    }
+  }
+
+  camera.position.x = nextX;
+  camera.position.z = nextZ;
   const floor = terrainHeight(camera.position.x, camera.position.z) + player.eyeHeight;
   camera.position.y = THREE.MathUtils.damp(camera.position.y, floor, 16, delta);
   camera.rotation.order = "YXZ";
