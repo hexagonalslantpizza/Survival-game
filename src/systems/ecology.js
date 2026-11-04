@@ -105,6 +105,8 @@ export function advanceJaguarState(animal, context, delta) {
   const scentStrength = Math.max(0, context.scentStrength ?? 0);
   animal.aiState ??= "roaming";
   animal.warningTimer ??= 0;
+  animal.warningCooldown ??= 0;
+  animal.warningCooldown = Math.max(0, animal.warningCooldown - Math.max(0, delta));
 
   if (fireDistance < 7) {
     animal.aiState = "retreating";
@@ -129,14 +131,15 @@ export function advanceJaguarState(animal, context, delta) {
     if (distance > 10) {
       animal.aiState = "stalking";
       animal.warningTimer = 0;
-    } else if (animal.warningTimer === 0 && (sprinting || distance < 5.5)) {
+    } else if (animal.warningTimer === 0 && sprinting) {
       animal.aiState = "pouncing";
     } else if (animal.warningTimer === 0) {
       animal.aiState = "stalking";
+      animal.warningCooldown = 6;
     }
     return animal.aiState;
   }
-  if (distance < 6) {
+  if (distance < 6 && animal.warningCooldown <= 0) {
     animal.aiState = "warning";
     animal.warningTimer = 2.5;
   } else {
