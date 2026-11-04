@@ -384,7 +384,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     }
     group.position.set(x, terrainHeight(x, z), z);
     scene.add(group);
-    animals.push({ type, mesh: group, hp: type === "jaguar" ? 70 : 35, speed: type === "jaguar" ? 1.7 : rand(0.5, 1.2), direction: rand(0, Math.PI * 2), timer: rand(2, 7), alive: true, attackCooldown: 0, aiState: "roaming", warningTimer: 0 });
+    animals.push({ type, mesh: group, hp: type === "jaguar" ? 70 : 35, speed: type === "jaguar" ? 1.7 : rand(0.5, 1.2), direction: rand(0, Math.PI * 2), timer: rand(2, 7), alive: true, attackCooldown: 0, aiState: "roaming", warningTimer: 0, warningCooldown: 0 });
   }
   for (let i = 0; i < 16; i++) {
     const x = rand(-worldSize * 0.4, worldSize * 0.4), z = rand(-worldSize * 0.4, worldSize * 0.4);
