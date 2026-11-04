@@ -69,11 +69,6 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   const style = document.createElement("style");
   style.textContent = [
     "#survival-ui{position:fixed;inset:0;z-index:8;pointer-events:none;font:13px Arial,sans-serif;color:#edf1e7}",
-    ".surv-top{position:absolute;top:62px;left:28px;width:220px;padding:12px 14px;background:rgba(10,18,13,.76);border:1px solid #81927466;border-radius:5px}",
-    ".surv-stat{display:grid;grid-template-columns:64px 1fr 34px;gap:7px;align-items:center;margin:7px 0;font-size:10px;letter-spacing:.08em}",
-    ".surv-track{height:7px;background:#ffffff20;border-radius:8px;overflow:hidden}.surv-fill{height:100%;width:100%;background:#a8bf8a;transition:width .15s}",
-    ".surv-bottom{position:absolute;bottom:68px;left:50%;transform:translateX(-50%);padding:8px 13px;background:#101a13c9;border:1px solid #ffffff22;border-radius:4px;font-size:11px;white-space:nowrap}",
-    ".surv-hint{position:absolute;bottom:102px;left:50%;transform:translateX(-50%);font-size:11px;color:#f4f1df;text-shadow:0 1px 5px #000;white-space:nowrap}",
     ".surv-panel{pointer-events:auto;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(720px,calc(100vw - 32px));max-height:min(78vh,720px);overflow:auto;background:rgba(12,20,15,.97);border:1px solid #91a47b88;border-radius:8px;padding:20px;box-shadow:0 18px 70px #000a}",
     ".surv-panel h2{font:500 26px Arial,sans-serif;letter-spacing:.12em;margin:0 0 6px}.surv-sub{color:#aebba7;font-size:11px;margin-bottom:16px}",
     ".surv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}",
@@ -89,10 +84,8 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     ".debug-box{padding:11px;background:#ffffff0a;border:1px solid #ffffff22;border-radius:4px}.debug-box h3{font-size:11px;letter-spacing:.1em;color:#b8caa5;margin:0 0 9px}",
     ".debug-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0;font-size:11px}.debug-row input[type=range]{width:105px}.debug-row input[type=number],.debug-row select{width:100px;background:#1e2c22;color:#fff;border:1px solid #63765c;padding:5px}",
     ".debug-actions{display:flex;gap:5px;flex-wrap:wrap}.debug-actions button{font-size:10px;padding:7px 9px}",
-    ".surv-toast{position:absolute;top:18%;left:50%;transform:translateX(-50%);background:#101a13e8;border:1px solid #a4b98d;padding:9px 14px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .2s}",
-    ".surv-top.terror-watch{background:rgba(35,5,8,.88);border-color:#8d2834;box-shadow:0 0 18px #7d142433}",
-    ".surv-top.terror-watch .watch-label{color:#ef7b83!important}",
-    "@media(max-width:600px){.surv-top{top:54px;left:10px;width:190px}.surv-panel{padding:14px}.surv-bottom{bottom:45px}}"
+    ".surv-toast{position:absolute;top:18%;left:50%;transform:translateX(-50%);background:#101a13e8;border:1px solid #a4b98d;padding:9px 14px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .2s;max-width:min(90vw,520px);text-align:center}",
+    "@media(max-width:600px){.surv-panel{padding:14px}}"
   ].join("\n");
   document.head.appendChild(style);
 
@@ -226,44 +219,119 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   rain.visible = false;
   scene.add(rain);
 
-  const topHud = document.createElement("div");
-  topHud.className = "surv-top";
-  topHud.innerHTML = '<div class="watch-label" style="font-size:10px;letter-spacing:.16em;color:#bdcba9;margin-bottom:9px">SURVIVAL STATUS</div><div id="surv-bars"></div><div id="surv-conditions" style="font-size:10px;color:#d0b98e;margin-top:8px"></div>';
-  ui.appendChild(topHud);
-  const hint = document.createElement("div");
-  hint.className = "surv-hint";
-  ui.appendChild(hint);
+  const watchCanvas = document.createElement("canvas");
+  watchCanvas.width = 512;
+  watchCanvas.height = 640;
+  const watchContext = watchCanvas.getContext("2d");
+  const watchTexture = new THREE.CanvasTexture(watchCanvas);
+  watchTexture.colorSpace = THREE.SRGBColorSpace;
+  const watchGroup = new THREE.Group();
+  watchGroup.visible = false;
+  const watchCaseMaterial = new THREE.MeshStandardMaterial({ color: 0x242a27, metalness: 0.72, roughness: 0.32 });
+  const watchBandMaterial = new THREE.MeshStandardMaterial({ color: 0x343b34, metalness: 0.12, roughness: 0.86 });
+  const forearmMaterial = new THREE.MeshStandardMaterial({ color: 0x46503b, roughness: 1 });
+  const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.34, 4, 8), forearmMaterial);
+  forearm.rotation.z = 0.72;
+  forearm.position.set(-0.06, -0.12, -0.055);
+  watchGroup.add(forearm);
+  const watchCase = new THREE.Mesh(new THREE.BoxGeometry(0.265, 0.335, 0.065), watchCaseMaterial);
+  watchGroup.add(watchCase);
+  const strapUpper = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.045), watchBandMaterial);
+  strapUpper.position.y = 0.225;
+  watchGroup.add(strapUpper);
+  const strapLower = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.045), watchBandMaterial);
+  strapLower.position.y = -0.225;
+  watchGroup.add(strapLower);
+  const watchGlassMaterial = new THREE.MeshBasicMaterial({ map: watchTexture });
+  const watchScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.225, 0.29), watchGlassMaterial);
+  watchScreen.position.z = 0.034;
+  watchGroup.add(watchScreen);
+  const sideButton = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.07, 0.045), watchCaseMaterial);
+  sideButton.position.set(0.145, 0.055, 0);
+  watchGroup.add(sideButton);
+  camera.add(watchGroup);
+  const watchRestPosition = new THREE.Vector3(-0.46, -0.76, -1.02);
+  const watchRaisedPosition = new THREE.Vector3(-0.37, -0.36, -0.78);
+  watchGroup.rotation.set(-0.28, -0.16, 0.22);
+  let watchOpen = false;
+  let watchProgress = 0;
+  let watchDrawTimer = 0;
   const toast = document.createElement("div");
   toast.className = "surv-toast";
   ui.appendChild(toast);
-  const bottom = document.createElement("div");
-  bottom.className = "surv-bottom";
-  ui.appendChild(bottom);
-
-  topHud.style.display = "none";
-  hint.style.display = "none";
-  bottom.style.display = "none";
-  function syncHudVisibility() {
-    const visible = isLocked();
-    topHud.style.display = visible ? "block" : "none";
-    hint.style.display = visible ? "block" : "none";
-    bottom.style.display = visible ? "block" : "none";
-  }
-  document.addEventListener("pointerlockchange", syncHudVisibility);
   const panelRoot = document.createElement("div");
   ui.appendChild(panelRoot);
   const debugRoot = document.createElement("div");
   ui.appendChild(debugRoot);
-  topHud.style.display = "none";
-  hint.style.display = "none";
-  bottom.style.display = "none";
-  function syncHudVisibility() {
-    const visible = isLocked();
-    topHud.style.display = visible ? "block" : "none";
-    hint.style.display = visible ? "block" : "none";
-    bottom.style.display = visible ? "block" : "none";
+
+  function drawWatch() {
+    const ctx = watchContext;
+    const corrupted = state.terror.watchCorrupted;
+    const accent = corrupted ? "#f0717b" : "#b9c99e";
+    ctx.clearRect(0, 0, 512, 640);
+    ctx.fillStyle = corrupted ? "#21090d" : "#101914";
+    ctx.fillRect(0, 0, 512, 640);
+    ctx.strokeStyle = corrupted ? "#9d303c" : "#53684d";
+    ctx.lineWidth = 5;
+    ctx.strokeRect(12, 12, 488, 616);
+    ctx.fillStyle = accent;
+    ctx.font = "bold 25px Arial";
+    ctx.fillText(corrupted ? "BIOMETRIC // ERR" : "WILDLANDS / FIELD", 32, 52);
+    const clock = String(Math.floor(state.time)).padStart(2, "0") + ":" + String(Math.floor((state.time % 1) * 60)).padStart(2, "0");
+    ctx.fillStyle = "#e8eee4";
+    ctx.font = "22px Arial";
+    ctx.fillText("DAY " + state.day + "     " + clock, 32, 92);
+    const readings = [["HEALTH", state.health], ["HYDRATION", state.thirst], ["NUTRITION", state.hunger], ["COMPOSURE", state.sanity]];
+    let y = 160;
+    for (const [label, value] of readings) {
+      ctx.fillStyle = "#aeb9aa";
+      ctx.font = "bold 21px Arial";
+      ctx.fillText(label, 32, y);
+      ctx.fillStyle = "#f0f1e8";
+      ctx.textAlign = "right";
+      ctx.font = "bold 25px Arial";
+      ctx.fillText(Math.round(value) + "%", 480, y);
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#354239";
+      ctx.fillRect(32, y + 17, 448, 13);
+      ctx.fillStyle = value < 25 ? "#c46d67" : accent;
+      ctx.fillRect(32, y + 17, 448 * THREE.MathUtils.clamp(value / 100, 0, 1), 13);
+      y += 88;
+    }
+    const warnings = [];
+    if (state.wounds.length) warnings.push("WOUNDS: " + state.wounds.length);
+    if (state.infection > 5) warnings.push("INFECTION DETECTED");
+    if (state.parasites > 5 || state.ecology.amoebic.phase === "active") warnings.push(state.ecology.amoebic.phase === "active" ? "ERR: BIO-LEAK" : "PARASITE LOAD");
+    if (state.ecology.botfly.phase !== "clear") warnings.push("BODY CHECK ADVISED");
+    if (state.weather === "rain") warnings.push("EXPOSURE: RAIN");
+    if (state.ecology.sefIlunStance === "hostile") warnings.push("REGIONAL THREAT: ELEVATED");
+    if (corrupted) warnings.unshift("SIGNAL INTEGRITY COMPROMISED");
+    ctx.fillStyle = corrupted ? "#ff9299" : "#d0b98e";
+    ctx.font = "bold 18px Arial";
+    ctx.fillText("DIAGNOSTICS", 32, 535);
+    ctx.font = "17px Arial";
+    (warnings.length ? warnings.slice(0, 3) : ["NO URGENT WARNINGS"]).forEach((warning, i) => ctx.fillText(warning, 32, 570 + i * 23));
+    watchTexture.needsUpdate = true;
   }
-  document.addEventListener("pointerlockchange", syncHudVisibility);
+
+  function updateWatch(delta) {
+    watchProgress = THREE.MathUtils.damp(watchProgress, watchOpen ? 1 : 0, 9, delta);
+    if (watchOpen || watchProgress > 0.01) watchGroup.visible = true;
+    watchGroup.position.lerpVectors(watchRestPosition, watchRaisedPosition, watchProgress);
+    if (!watchOpen && watchProgress < 0.01) watchGroup.visible = false;
+    if (watchOpen) {
+      watchDrawTimer -= delta;
+      if (watchDrawTimer <= 0) {
+        drawWatch();
+        watchDrawTimer = 0.25;
+      }
+    }
+  }
+
+  function handlePointerLockChange() {
+    if (!isLocked()) watchOpen = false;
+  }
+  document.addEventListener("pointerlockchange", handlePointerLockChange);
 
   function notify(message) {
     state.message = message;
@@ -930,37 +998,12 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     updateTerror(delta);
   }
 
-  function renderHud() {
-    const active = isLocked();
-    topHud.style.display = active ? "block" : "none";
-    hint.style.display = active ? "block" : "none";
-    bottom.style.display = active ? "block" : "none";
-    const bars = ["health","hunger","thirst","stamina","sanity"];
-    const labels = { health:"HEALTH", hunger:"HUNGER", thirst:"THIRST", stamina:"STAMINA", sanity:"SANITY" };
-    const colors = { health:"#bd7468", hunger:"#c7a66b", thirst:"#76a9bb", stamina:"#a9c48c", sanity:"#9b91bd" };
-    const barRoot = document.getElementById("surv-bars");
-    if (barRoot) barRoot.innerHTML = bars.map(key => '<div class="surv-stat"><span>' + labels[key] + '</span><div class="surv-track"><div class="surv-fill" style="width:' + state[key] + '%;background:' + colors[key] + '"></div></div><b>' + Math.round(state[key]) + '</b></div>').join("");
-    topHud.classList.toggle("terror-watch", state.terror.watchCorrupted);
-    const watchLabel = topHud.querySelector(".watch-label");
-    if (watchLabel) watchLabel.textContent = state.terror.watchCorrupted ? "BIOMETRIC SIGNAL // ERR" : "SURVIVAL STATUS";
-    const cond = document.getElementById("surv-conditions");
-    if (cond) {
-      const tags = [];
-      if (state.weather === "rain") tags.push("RAIN");
-      if (state.wounds.length) tags.push("WOUNDS " + state.wounds.length);
-      if (state.infection > 5) tags.push("INFECTION");
-      if (state.parasites > 5 || state.ecology.amoebic.phase === "active") tags.push("PARASITES");
-      if (state.ecology.botfly.phase !== "clear") tags.push("BODY CHECK");
-      if (state.ecology.sefIlunStance === "hostile") tags.push("CANOPY HOSTILE");
-      cond.textContent = tags.join(" • ");
-    }
-    bottom.textContent = "DAY " + state.day + "  •  " + String(Math.floor(state.time)).padStart(2,"0") + ":" + String(Math.floor((state.time % 1) * 60)).padStart(2,"0") + "  •  " + count("spear") + " SPEAR";
+  function updatePresentation(delta) {
+    updateWatch(delta);
     if (toast.style.opacity === "1") {
-      state.messageTime -= 1 / 60;
+      state.messageTime -= delta;
       if (state.messageTime <= 0) toast.style.opacity = "0";
     }
-    const target = nearestTarget();
-    hint.textContent = target ? (target.kind === "water" ? "E  COLLECT WATER" : target.kind === "fire" ? "E  COOK MEAT / BOIL WATER" : target.kind === "shelter" ? "E  REST" : target.kind === "tree" ? "E  CHOP TREE (STONE AXE)" : "E  GATHER " + target.kind.toUpperCase()) : (count("spear") ? "LEFT CLICK  HUNT  •  I INVENTORY  •  C CRAFT  •  J JOURNAL  •  F3 DEBUG" : "I INVENTORY  •  C CRAFT  •  J JOURNAL  •  F3 DEBUG");
     const read = document.getElementById("debug-readout");
     if (read) read.textContent = [
       "Position: " + camera.position.x.toFixed(1) + ", " + camera.position.y.toFixed(1) + ", " + camera.position.z.toFixed(1),
@@ -987,6 +1030,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       return;
     }
     if (event.code === "Escape" && state.activePanel) { closePanel(); return; }
+    if (event.code === "KeyH" && isLocked() && !state.activePanel && !debugRoot.childElementCount) { watchOpen = !watchOpen; return; }
     if (event.repeat) return;
     if (event.code === "KeyE" && isLocked()) interact();
     if ((event.code === "KeyI" || event.code === "Tab") && isLocked()) { event.preventDefault(); if (state.activePanel === "INVENTORY") closePanel(); else openInventory(); }
@@ -1016,7 +1060,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     updateSurvival(delta);
     updateRain(delta);
     updateAnimals(delta);
-    renderHud();
+    updatePresentation(delta);
   }
   function canSprint() { return !state.survivalEnabled || state.stamina > 1; }
   function sprintMultiplier() { return state.survivalEnabled ? (state.stamina > 0 ? 1 : player.speed / player.sprintSpeed) : 1; }
@@ -1027,7 +1071,21 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   function dispose() {
     document.removeEventListener("keydown", keydown);
     document.removeEventListener("mousedown", click);
-    document.removeEventListener("pointerlockchange", syncHudVisibility);
+    document.removeEventListener("pointerlockchange", handlePointerLockChange);
+    camera.remove(watchGroup);
+    watchTexture.dispose();
+    watchCase.geometry.dispose();
+    watchCaseMaterial.dispose();
+    watchBandMaterial.dispose();
+    forearm.geometry.dispose();
+    forearmMaterial.dispose();
+    strapUpper.geometry.dispose();
+    strapLower.geometry.dispose();
+    strapUpper.material.dispose();
+    sideButton.geometry.dispose();
+    sideButton.material.dispose();
+    watchScreen.geometry.dispose();
+    watchGlassMaterial.dispose();
     scene.remove(rain);
     removeShadowActor();
     if (terrorHum) terrorHum.stop();
