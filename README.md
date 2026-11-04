@@ -42,6 +42,8 @@ The current playable prototype includes:
 - A field journal for discoveries
 - A day/night cycle and a testable rain weather state
 - A developer debug menu opened with F3
+- A modular ecology lifecycle prototype for untreated-water infestation, carcass exposure, and industrial smoke response
+- Automated unit tests for parasite timing, pollution thresholds, scent direction, and predator state transitions
 
 **Still not implemented:** multiplayer, PvP networking, advanced animal animations/behaviors, a full range of disease types, advanced construction, and final itch.io release packaging. The wildlife models and survival rules are early prototypes and need playtesting.
 
@@ -391,6 +393,8 @@ Here is what the important files do:
 |---|---|
 | `index.html` | Main webpage and game interface |
 | `src/main.js` | Main Three.js game code |
+| `src/systems/ecology.js` | Modular parasite, pollution, scent, and wildlife state logic |
+| `tests/` | Automated system tests (`npm test`) |
 | `src/style.css` | Menus, HUD, and visual styling |
 | `package.json` | Project information, dependencies, and commands |
 | `package-lock.json` | Records the exact installed dependency versions |
