@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createEcologyState, exposeToAmoebicParasite, absorbCarbohydrates, advanceEcology, emitIndustrialSmoke, exposeToBotflyScent, applyResinToBotfly, completeBotflyExtraction } from "./ecology.js";
 
 export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, trees, solidObstacles, isLocked }) {
   const state = {
@@ -9,7 +10,8 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     showInventory: false, activePanel: "", buildMode: "", message: "Explore. Press E near something to interact.",
     messageTime: 5, kills: 0, gathered: 0, crafted: 0, damageTaken: 0, fps: 0,
     thirstDamageTimer: 0, hungerDamageTimer: 0, infectionTimer: 0,
-    temperature: 28, wetness: 0, fireCount: 0, weather: "clear"
+    temperature: 28, wetness: 0, fireCount: 0, weather: "clear",
+    ecology: createEcologyState()
   };
 
   const itemInfo = {
@@ -236,12 +238,13 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
 
   function useItem(id) {
     if (count(id) < 1) return;
-    if (id === "fruit") { state.hunger = Math.min(100, state.hunger + 17); }
+    if (id === "fruit") { state.hunger = Math.min(100, state.hunger + absorbCarbohydrates(state.ecology, 17)); }
     else if (id === "coconut") { state.hunger = Math.min(100, state.hunger + 12); state.thirst = Math.min(100, state.thirst + 22); }
     else if (id === "clean_water") { state.thirst = Math.min(100, state.thirst + 32); }
     else if (id === "dirty_water") {
       state.thirst = Math.min(100, state.thirst + 32);
-      if (Math.random() < 0.35) { state.parasites = Math.min(100, state.parasites + 20); notify("Your stomach feels unsettled. Possible parasites."); }
+      if (exposeToAmoebicParasite(state.ecology)) notify("You may have swallowed something harmful. Symptoms may take time to appear.");
+      else notify("The water tastes foul. Keep an eye on your condition.");
     } else if (id === "cooked_meat") { state.hunger = Math.min(100, state.hunger + 32); state.health = Math.min(100, state.health + 4); }
     else if (id === "bandage") {
       if (!state.wounds.length) { notify("You have no wounds to bandage."); return; }
@@ -608,6 +611,10 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     action(testing, "ADD WOUND", () => { state.wounds.push({ age: 0 }); notify("Debug wound added."); });
     action(testing, "ADD INFECTION", () => { state.infection = Math.min(100, state.infection + 25); });
     action(testing, "ADD PARASITES", () => { state.parasites = Math.min(100, state.parasites + 25); });
+    action(testing, "TEST AMOEBIC EXPOSURE", () => { exposeToAmoebicParasite(state.ecology, () => 0); notify("Debug: amoebic incubation started."); });
+    action(testing, "TEST BOTFLY LIFECYCLE", () => { exposeToBotflyScent(state.ecology, 10, false); advanceEcology(state.ecology, 48); notify("Debug: body inspection should detect a treatable parasite."); });
+    action(testing, "APPLY RESIN / COMPLETE TREATMENT", () => { if (applyResinToBotfly(state.ecology)) { advanceEcology(state.ecology, 2); completeBotflyExtraction(state.ecology); notify("The fictional parasite treatment is complete."); } else notify("No active condition is ready for this treatment."); });
+    action(testing, "TEST INDUSTRIAL SMOKE", () => { emitIndustrialSmoke(state.ecology, 55); notify("Debug: regional smoke pollution increased."); });
     action(testing, "DAMAGE PLAYER (-25)", () => { damagePlayer(25, "Debug damage"); });
     action(testing, "TEST FALL DAMAGE", () => { applyFallDamage(22); });
     action(testing, "HEAL PLAYER", () => { state.health = 100; state.wounds = []; state.infection = 0; state.parasites = 0; });
@@ -681,6 +688,14 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
 
   function updateSurvival(delta) {
     state.time += delta * 0.025;
+    if (state.survivalEnabled) {
+      const previousAmoebicPhase = state.ecology.amoebic.phase;
+      advanceEcology(state.ecology, delta * 0.025);
+      if (previousAmoebicPhase === "incubating" && state.ecology.amoebic.phase === "active") {
+        state.parasites = Math.max(state.parasites, 20);
+        notify("Your stomach cramps. Your smartwatch reports ERR: BIO-LEAK.");
+      }
+    }
     if (state.time >= 24) { state.time -= 24; state.day += 1; }
     if (state.weather === "rain") state.wetness = Math.min(100, state.wetness + delta * 2.5);
     else state.wetness = Math.max(0, state.wetness - delta * 0.5);
@@ -733,7 +748,9 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       if (state.weather === "rain") tags.push("RAIN");
       if (state.wounds.length) tags.push("WOUNDS " + state.wounds.length);
       if (state.infection > 5) tags.push("INFECTION");
-      if (state.parasites > 5) tags.push("PARASITES");
+      if (state.parasites > 5 || state.ecology.amoebic.phase === "active") tags.push("PARASITES");
+      if (state.ecology.botfly.phase !== "clear") tags.push("BODY CHECK");
+      if (state.ecology.sefIlunStance === "hostile") tags.push("CANOPY HOSTILE");
       cond.textContent = tags.join(" • ");
     }
     bottom.textContent = "DAY " + state.day + "  •  " + String(Math.floor(state.time)).padStart(2,"0") + ":" + String(Math.floor((state.time % 1) * 60)).padStart(2,"0") + "  •  " + count("spear") + " SPEAR";
@@ -751,6 +768,8 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       "Resources active: " + resources.filter(r => r.active).length,
       "Inventory types: " + Object.keys(state.inventory).filter(k => count(k)>0).length,
       "Wounds: " + state.wounds.length + " | Infection: " + state.infection.toFixed(1) + " | Parasites: " + state.parasites.toFixed(1),
+      "Amoebic: " + state.ecology.amoebic.phase + " (" + state.ecology.amoebic.incubationHoursRemaining.toFixed(1) + "h) | Botfly: " + state.ecology.botfly.phase,
+      "Air pollution: " + state.ecology.airPollutionLoad.toFixed(1) + " | Above threshold: " + state.ecology.hoursAbovePollutionThreshold.toFixed(1) + "h | Sef-Ilun: " + state.ecology.sefIlunStance,
       "Animals harvested: " + state.kills + " | Gather actions: " + state.gathered + " | Crafts: " + state.crafted,
       "Difficulty: " + state.difficulty + " | Survival: " + state.survivalEnabled + " | God mode: " + state.godMode,
       "Weather: " + state.weather + " | Temperature: " + state.temperature + " C | Wetness: " + state.wetness.toFixed(1) + "%",
