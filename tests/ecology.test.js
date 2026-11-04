@@ -93,3 +93,10 @@ test("jaguars only receive a rare spawn check at night when none are active", ()
   assert.equal(shouldSpawnJaguar({ isNight: true, existingJaguarCount: 0 }, () => 0.02), true);
   assert.equal(shouldSpawnJaguar({ isNight: true, existingJaguarCount: 0 }, () => 0.5), false);
 });
+
+test("a stationary player is not trapped in a repeating warning loop", () => {
+  const jaguar = { aiState: "roaming", warningTimer: 0, warningCooldown: 0 };
+  assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 30 }, 0.1), "warning");
+  assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 30 }, 2.5), "stalking");
+  assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 30 }, 0.1), "stalking");
+});
