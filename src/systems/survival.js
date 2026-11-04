@@ -88,15 +88,15 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     ".debug-actions{display:flex;gap:5px;flex-wrap:wrap}.debug-actions button{font-size:10px;padding:7px 9px}",
     ".surv-toast{position:absolute;top:18%;left:50%;transform:translateX(-50%);background:#101a13e8;border:1px solid #a4b98d;padding:9px 14px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .2s}",
     "@media(max-width:600px){.surv-top{top:54px;left:10px;width:190px}.surv-panel{padding:14px}.surv-bottom{bottom:45px}}"
-  ].join("\\n");
+  ].join("\n");
   document.head.appendChild(style);
 
   const rainCount = 420;
   const rainPositions = new Float32Array(rainCount * 3);
   for (let i = 0; i < rainCount; i++) {
-    rainPositions[i * 3] = camera.position.x + rand(-22, 22);
-    rainPositions[i * 3 + 1] = camera.position.y + rand(4, 26);
-    rainPositions[i * 3 + 2] = camera.position.z + rand(-22, 22);
+    rainPositions[i * 3] = camera.position.x + (Math.random() * 44 - 22);
+    rainPositions[i * 3 + 1] = camera.position.y + (Math.random() * 22 + 4);
+    rainPositions[i * 3 + 2] = camera.position.z + (Math.random() * 44 - 22);
   }
   const rainGeometry = new THREE.BufferGeometry();
   rainGeometry.setAttribute("position", new THREE.BufferAttribute(rainPositions, 3));
