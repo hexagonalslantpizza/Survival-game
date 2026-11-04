@@ -28,9 +28,14 @@ func _setup_input() -> void:
 func _add_key_action(action_name: String, keycode: Key) -> void:
 	if not InputMap.has_action(action_name):
 		InputMap.add_action(action_name)
-	var event := InputEventKey.new()
-	event.physical_keycode = keycode
-	if not InputMap.action_get_events(action_name).any(func(existing: InputEvent) -> bool: return existing is InputEventKey and existing.physical_keycode == keycode):
+	var found: bool = false
+	for existing in InputMap.action_get_events(action_name):
+		if existing is InputEventKey and existing.physical_keycode == keycode:
+			found = true
+			break
+	if not found:
+		var event := InputEventKey.new()
+		event.physical_keycode = keycode
 		InputMap.action_add_event(action_name, event)
 
 func _input(event: InputEvent) -> void:
