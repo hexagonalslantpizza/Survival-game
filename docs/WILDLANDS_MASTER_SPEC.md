@@ -666,3 +666,55 @@ WILDLANDS has no traditional persistent HUD. This is a hard presentation rule, n
 The current implementation milestone removes the old five-bar HUD, location label, center crosshair, and permanent day/time strip. A camera-attached 3D wrist/watch prototype is raised and lowered with **H**. Its screen presents health, hydration, nutrition, composure, time, and concise diagnostic warnings. Stamina remains hidden. Terror corrupts the watch screen itself rather than a separate overlay.
 
 Temporary prototype exceptions are explicitly not final design: the F3 developer panel is test-only, while the current inventory, crafting, and journal panels are scaffolding awaiting replacement by the physical backpack, hand-assembly surface, and notebook. Do not expand those overlays into a conventional game HUD.
+
+## 23. Vertical maze terrain, diegetic coordinates, and visual fidelity
+
+This section adds detail to the existing 6 km × 6 km rainforest, four-layer ecology, navigation, weather, body inspection, and sanity systems. It does not replace the established world scale, sectors, or browser-based Three.js runtime.
+
+### 23.1 Natural maze and traversable terrain
+
+The terrain should prioritize vertical complexity and connected natural routes over a broad, flat, uninterrupted footprint. Massive rock formations, sheer cliffs, narrow ridges, deep ravines, sinkholes, and steep slopes divide the rainforest into distinct ecological pockets. These formations should create meaningful route choices and sightline breaks while remaining part of one contiguous world.
+
+Traversal between elevations may require climbing equipment, grappling equipment, natural vines, roots, ledges, faction-built bridges, or cave passages. Climbing and grappling are intended gameplay systems, not yet implemented features. Routes must be readable through environmental clues and offer reasonable alternatives; avoid making essential progression depend on an invisible or pixel-perfect interaction.
+
+Winding riverbeds, tributaries, small lagoons, hidden waterfalls, and extensive wetlands shape travel corridors. They provide recognizable landmarks and resources while also creating habitat for dangerous fictional wildlife, including caimans and stingrays. Waterways should connect naturally to the established northeast-to-southwest river flow and the three macro-sectors.
+
+Cave networks pass through ridges and underground formations. They can provide dark shortcuts between regions, mineral and iron discovery areas, and habitat for fictional scorpions and spiders. Cave networks connect the existing Under-Root layer to surface entrances at different elevations. Darkness, acoustics, humidity, flooding, and wildlife make caves distinct spaces rather than simple tunnels.
+
+### 23.2 Diegetic coordinate navigation
+
+There is no on-screen minimap, GPS map, floating player marker, or automatic route tracking. Players compare sketch-style physical maps discovered at abandoned locations with landmarks, a handheld compass, and coordinates read from the physical smartwatch.
+
+The watch compass may provide latitude and longitude coordinates as a navigational instrument. It does not render a map, reveal unexplored terrain, mark objectives, or automatically plot a route. Coordinate readings should be useful but require players to interpret them alongside physical maps, terrain silhouettes, river direction, and recorded field notes.
+
+Abandoned map sources may be incomplete, outdated, damaged, or locally focused. Their information becomes part of the player's physical map knowledge only through discovery and deliberate recording. This extends the existing rule that the paper map does not automatically update the player's position or reveal newly discovered territory.
+
+### 23.3 Claustrophobic multi-tier vegetation
+
+Vegetation should form dense, overlapping layers: broad banana leaves, bamboo groves, twisting vines, ferns, buttress roots, shrubs, trunks, and canopy growth. Foliage should meaningfully restrict long-distance visibility and create changing sightlines as the player moves. It must not become an opaque wall that hides every threat without clues.
+
+Reduced visibility increases the importance of the acoustic simulation. Players should be able to infer nearby animal or environmental activity from direction, rhythm, distance, and changes in ambient sound, while rain, rivers, wind, and foliage can mask or distort those clues. Sound remains informative but imperfect.
+
+### 23.4 Dynamic light, weather, and darkness
+
+Daylight filters through the canopy in scattered shafts and localized patches. Sun angle, canopy density, cloud cover, moisture, and weather affect the appearance and reach of those light shafts. Heavy rain changes the atmosphere, darkens the canopy, adds ground wetness and mud, and can reduce visibility. Night should be genuinely dark beneath dense canopy, making carried light sources, torches, and campfires meaningful.
+
+Lighting and weather must remain connected to the existing world simulation: rain and wind affect rivers, mud, sound propagation, fire, temperature, wildlife, and faction activity. Do not treat rain, fog, god-rays, or darkness as purely decorative post-processing.
+
+### 23.5 Physical condition and visual inspection
+
+The first-person character's visible arms and legs communicate physical condition. Close inspection may reveal dirt accumulation, attached leeches, rashes, and non-graphically presented wounds or other conditions. These visual details correspond to actual simulation state and can be examined through the established body-inspection interaction.
+
+Do not replace this with floating injury icons or a persistent condition HUD. Visual presentation must remain non-graphic and readable, and should not imply that real-world medical diagnosis or treatment can be performed from appearance alone.
+
+### 23.6 Sanity-linked visual distortion
+
+As sanity deteriorates, the visual presentation may become less reliable through restrained peripheral warping, gradual desaturation, altered shadows, and brief imagined silhouettes resembling fictional faction figures or predators. These effects extend the existing paranoia and terror phases.
+
+Hallucinations must remain distinct from real entities in the simulation, must not create actual collision or damage, and should preserve player control. Avoid intense screen-edge motion, forced camera movement, rapid flashing, or effects that make navigation and genuine threat recognition unfair. Accessibility controls should allow visual intensity to be reduced.
+
+### 23.7 Runtime and implementation status
+
+The visual target described here is photorealistic, but the current project runtime remains Three.js, Vite, and JavaScript in the browser. References to Unity describe an intended fidelity target only; they do not authorize an engine migration. Recreate the desired results with the current rendering architecture unless the user explicitly approves a technology change.
+
+The current prototype does not yet implement the complete vertical maze, climbing/grappling traversal, coordinate readout, discovered physical map system, dense multi-tier foliage, full dynamic canopy lighting, detailed body-condition visuals, or the complete sanity shader stack. These are approved design targets, not completed features.
