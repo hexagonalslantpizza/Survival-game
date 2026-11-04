@@ -511,6 +511,8 @@ Jaguars should use a state machine rather than arbitrary waypoint wandering:
 
 Predators do not literally cancel their sound footprint or perfectly match player footsteps. They remain quiet through behavior and environmental cover, but observant players should receive fair audio/visual clues. Player condition may influence predator interest but must not produce unavoidable attacks against an injured player. Fire discourages approach; it is not a universal instant-delete button.
 
+**Prototype implementation:** Jaguars now have roaming, stalking, warning, pouncing, and retreating states. Stalking approaches from behind the player's facing direction; a warning window precedes a pounce; a nearby campfire triggers retreat. A 3% spawn check runs once per real-time minute at night when no jaguar is active. The current prototype treats its small forest map as eligible habitat; regional biome-density checks will replace this placeholder on the larger world.
+
 ### 17.4 Micro-fauna ground hazards
 
 Ant columns and similar dense ground fauna are regional hazards. They should be visible and avoidable, with protective clothing or mud barriers reducing exposure. Contact creates a temporary movement/comfort penalty and a fictional toxicity or irritation state. Avoid forced, uninterruptible animations and instant catastrophic damage; the player must retain meaningful control and escape options.
@@ -530,7 +532,7 @@ Industrial structures emit persistent smoke into regional air state. Emissions a
 
 Scent sources include carcasses, exposed raw food, and unburied organic waste. Wind projects scent downwind as a directional, weakening corridor rather than a perfect circle. AI receives approximate scent strength and direction, not exact player coordinates.
 
-The prototype now includes a tested downwind-corridor calculation. Connecting it to persistent carcass/waste sources, weather wind, and wildlife/faction receivers is a subsequent integration task.
+The prototype records harvested carcass scent sources and uses proximity to an unprotected carcass to accumulate the botfly exposure timer; a nearby campfire interrupts and resets that exposure. The downwind-corridor calculation is independently tested but is not yet connected to predator or faction receivers. The current prototype uses a local proximity check and a simple weather placeholder, not the final regional wind/scent field.
 
 ### 17.7 Implementation boundaries
 
