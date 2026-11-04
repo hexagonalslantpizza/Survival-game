@@ -1,10 +1,11 @@
 import * as THREE from "three";
+import { createNotebookState } from "./knowledge.js";
 import { createEcologyState, exposeToAmoebicParasite, absorbCarbohydrates, advanceEcology, emitIndustrialSmoke, exposeToBotflyScent, applyResinToBotfly, completeBotflyExtraction, advanceJaguarState, shouldSpawnJaguar } from "./ecology.js";
 
 export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, trees, solidObstacles, isLocked }) {
   const state = {
     health: 100, hunger: 100, thirst: 100, stamina: 100, sanity: 100,
-    inventory: {}, discoveries: new Set(["Tropical Lowlands"]), journal: [],
+    inventory: {}, discoveries: new Set(), notebook: createNotebookState(), journal: [],
     wounds: [], infection: 0, parasites: 0, day: 1, time: 8.5,
     difficulty: "normal", survivalEnabled: true, godMode: false,
     showInventory: false, activePanel: "", buildMode: "", message: "Explore. Press E near something to interact.",
