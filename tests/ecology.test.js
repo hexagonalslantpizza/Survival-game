@@ -9,7 +9,8 @@ import {
   completeBotflyExtraction,
   emitIndustrialSmoke,
   advanceEcology,
-  calculateDownwindScent
+  calculateDownwindScent,
+  advanceJaguarState
 } from "../src/systems/ecology.js";
 
 test("amoebic infestation incubates for twelve game-hours", () => {
@@ -64,4 +65,12 @@ test("downwind scent is strongest inside the wind corridor", () => {
   assert.ok(calculateDownwindScent(source, { x: 10, z: 0 }, { x: 1, z: 0 }) > 0);
   assert.equal(calculateDownwindScent(source, { x: -10, z: 0 }, { x: 1, z: 0 }), 0);
   assert.equal(calculateDownwindScent(source, { x: 10, z: 100 }, { x: 1, z: 0 }), 0);
+});
+
+test("jaguar shadows at distance, warns before pouncing, and retreats from nearby fire", () => {
+  const jaguar = { aiState: "roaming", warningTimer: 0 };
+  assert.equal(advanceJaguarState(jaguar, { distance: 18, fireDistance: 30 }, 0.1), "stalking");
+  assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 30 }, 0.1), "warning");
+  assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 30, playerSprinting: true }, 2.5), "pouncing");
+  assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 4 }, 0.1), "retreating");
 });
