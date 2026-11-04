@@ -264,22 +264,13 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
 
   function openCrafting() {
     const content = document.createElement("div");
-    const grid = document.createElement("div");
-    grid.className = "surv-grid";
-    for (const recipe of recipes) {
-      const needsText = Object.entries(recipe.needs).map(([id, amount]) => amount + " " + (itemInfo[id]?.[0] || id)).join(" + ");
-      grid.appendChild(makeCard(recipe.name, recipe.description + " Requires: " + needsText, "CRAFT", () => {
-        if (!hasItems(recipe.needs)) { notify("Not enough materials."); return; }
-        spendItems(recipe.needs);
-        addItem(recipe.id, recipe.gives);
-        state.crafted += 1;
-        discover("Crafting: " + recipe.name, "Recipe: " + needsText + ". Crafted " + recipe.name + ".");
-        notify("Crafted " + recipe.name + ".");
-        openCrafting();
-      }, !hasItems(recipe.needs)));
-    }
-    content.appendChild(grid);
-    makePanel("CRAFTING", "Combine gathered materials into useful equipment. C closes this panel.", content);
+    const note = document.createElement("p");
+    note.style.cssText = "color:#d8dfd0;line-height:1.7;max-width:560px";
+    note.textContent = state.notebook.entries.length
+      ? "Your notebook contains experimental discoveries. Physical hand-assembly is not available in this prototype yet."
+      : "Your notebook is blank. No recipes are known. In the finished system, you will sit at a flat stone mat and experiment with physical items. The hand-assembly mat is not available in this prototype yet.";
+    content.appendChild(note);
+    makePanel("CRAFTING", "No pre-unlocked recipes. Discover methods through experimentation.", content);
   }
 
   function openJournal() {
