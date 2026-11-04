@@ -45,7 +45,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     { id: "arrow", name: "Arrows x3", needs: { stick: 1, feather: 2, flint: 1 }, gives: 3, description: "Three basic arrows." },
     { id: "bandage", name: "Bandage", needs: { fiber: 2, herb: 1 }, gives: 1, description: "A clean plant-fiber dressing." },
     { id: "campfire", name: "Campfire Kit", needs: { stick: 5, stone: 3, fiber: 1 }, gives: 1, description: "A portable fire kit." },
-    { id: "shelter", name: "Leaf Shelter Kit", needs: { stick: 8, fiber: 5, rope: 2 }, gives: 1, description: "Materials for a simple shelter." }
+    { id: "shelter", name: "Leaf Shelter Kit", needs: { log: 3, fiber: 4, rope: 2 }, gives: 1, description: "Materials for a simple shelter." }
   ];
 
   const animals = [];
@@ -590,7 +590,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     const amount = document.createElement("input"); amount.type = "number"; amount.min = "1"; amount.max = "99"; amount.value = "5";
     const spawnRow = document.createElement("div"); spawnRow.className = "debug-row"; spawnRow.append(itemSelect, amount); inventory.appendChild(spawnRow);
     action(inventory, "GIVE ITEM", () => { addItem(itemSelect.value, Math.max(1, Math.min(99, Number(amount.value) || 1))); notify("Debug: added " + itemInfo[itemSelect.value][0]); });
-    action(inventory, "GIVE ALL MATERIALS", () => { ["stick","stone","flint","fiber","herb","fruit","coconut","rope","hide","feather"].forEach(id => addItem(id, 25)); notify("Debug materials added."); });
+    action(inventory, "GIVE ALL MATERIALS", () => { ["stick","stone","flint","fiber","herb","fruit","coconut","rope","log","hide","feather"].forEach(id => addItem(id, 25)); notify("Debug materials added."); });
     const spawn = box("SPAWN & WORLD");
     action(spawn, "SPAWN JAGUAR", () => { makeAnimal("jaguar", camera.position.x + 8, camera.position.z - 8); });
     action(spawn, "SPAWN ARMADILLO", () => { makeAnimal("armadillo", camera.position.x + 5, camera.position.z - 5); });
@@ -740,7 +740,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       if (state.messageTime <= 0) toast.style.opacity = "0";
     }
     const target = nearestTarget();
-    hint.textContent = target ? (target.kind === "water" ? "E  COLLECT WATER" : target.kind === "fire" ? "E  COOK MEAT" : target.kind === "shelter" ? "E  REST" : "E  GATHER " + target.kind.toUpperCase()) : (count("spear") ? "LEFT CLICK  HUNT  •  I INVENTORY  •  C CRAFT  •  J JOURNAL  •  F3 DEBUG" : "I INVENTORY  •  C CRAFT  •  J JOURNAL  •  F3 DEBUG");
+    hint.textContent = target ? (target.kind === "water" ? "E  COLLECT WATER" : target.kind === "fire" ? "E  COOK MEAT / BOIL WATER" : target.kind === "shelter" ? "E  REST" : target.kind === "tree" ? "E  CHOP TREE (STONE AXE)" : "E  GATHER " + target.kind.toUpperCase()) : (count("spear") ? "LEFT CLICK  HUNT  •  I INVENTORY  •  C CRAFT  •  J JOURNAL  •  F3 DEBUG" : "I INVENTORY  •  C CRAFT  •  J JOURNAL  •  F3 DEBUG");
     const read = document.getElementById("debug-readout");
     if (read) read.textContent = [
       "Position: " + camera.position.x.toFixed(1) + ", " + camera.position.y.toFixed(1) + ", " + camera.position.z.toFixed(1),
@@ -751,6 +751,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       "Wounds: " + state.wounds.length + " | Infection: " + state.infection.toFixed(1) + " | Parasites: " + state.parasites.toFixed(1),
       "Animals harvested: " + state.kills + " | Gather actions: " + state.gathered + " | Crafts: " + state.crafted,
       "Difficulty: " + state.difficulty + " | Survival: " + state.survivalEnabled + " | God mode: " + state.godMode,
+      "Weather: " + state.weather + " | Temperature: " + state.temperature + " C | Wetness: " + state.wetness.toFixed(1) + "%",
       "FPS: " + state.fps.toFixed(0) + " | Draw calls: " + (renderer ? renderer.info.render.calls : 0) + " | Triangles: " + (renderer ? renderer.info.render.triangles : 0)
     ].join("\\n");
   }
