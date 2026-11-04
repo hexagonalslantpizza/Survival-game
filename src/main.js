@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import "./style.css";
+import { createSurvivalSystems } from "./systems/survival.js";
 
 const mount = document.querySelector("#game");
 const startScreen = document.querySelector("#start-screen");
@@ -258,6 +259,7 @@ const player = {
 };
 const keys = new Set();
 let locked = false;
+const survival = createSurvivalSystems({ scene, camera, player, terrainHeight, worldSize: WORLD_SIZE, isLocked: () => locked });
 let lastTime = performance.now();
 
 function requestLock() {
@@ -304,7 +306,8 @@ function updatePlayer(delta) {
   if (keys.has("KeyA")) direction.sub(right);
   if (direction.lengthSq() > 0) direction.normalize();
   const sprinting = keys.has("ShiftLeft") || keys.has("ShiftRight");
-  const speed = sprinting ? player.sprintSpeed : player.speed;
+  const speed = sprinting && survival.canSprint() ? player.sprintSpeed * survival.sprintMultiplier() : player.speed;
+  survival.consumeSprint(delta, sprinting && direction.lengthSq() > 0);
   player.velocity.x = THREE.MathUtils.damp(player.velocity.x, direction.x * speed, 12, delta);
   player.velocity.z = THREE.MathUtils.damp(player.velocity.z, direction.z * speed, 12, delta);
 
@@ -340,7 +343,10 @@ function animate(now) {
   requestAnimationFrame(animate);
   const delta = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
-  if (locked) updatePlayer(delta);
+  if (locked) {
+    survival.update(delta);
+    updatePlayer(delta);
+  }
   renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);
