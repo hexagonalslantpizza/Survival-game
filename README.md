@@ -244,6 +244,7 @@ You do not need to repeat `npm install` every time.
 | WASD | Move |
 | Mouse | Look around |
 | Shift | Sprint |
+| Space | Jump |
 | E | Gather, chop trees (with an axe), collect water, cook, or interact |
 | I or Tab | Inventory |
 | C | Crafting |
