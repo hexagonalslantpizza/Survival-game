@@ -602,7 +602,7 @@ At Phase 3, the game may layer several unreliable-sense effects:
 - The normal jungle ambience is intended to recede into a restrained low-frequency pressure tone. The current prototype adds a quiet synthesized hum; there is no existing full jungle ambience mixer to fade yet.
 - A delayed, low-volume footstep-like sound is synthesized about 0.4 seconds after player movement. It is a designed imitation cue, not a recording or exact duplicate of the character's actual footsteps. Stereo panning alternates sides; it is not true rear-channel spatial audio.
 - A faint shadow silhouette can appear in peripheral vision. It is removed immediately if the player turns it into the central 60-degree view, and it also expires after a short interval. These are visual hallucination actors, not enemy NPCs and cannot attack.
-- The survival diagnostic panel adopts a dark crimson warning treatment and reports a corrupted biometric signal. This is a prototype presentation of the intended diegetic smartwatch behavior, not the finished wrist-mounted device.
+- The physical wristwatch screen adopts a dark crimson warning treatment and reports a corrupted biometric signal. It is the primary biometric interface; it is inspected deliberately rather than displayed as a permanent overlay.
 
 The system should never force a rapid camera rotation, blur the player's controls, or rely on strobing/flashing. Audio and visual intensity should remain configurable and should not drown out important gameplay cues.
 
@@ -619,7 +619,7 @@ Not yet implemented:
 - A real jungle ambience mix to fade, since the prototype currently has no ambient audio system.
 - Actual recorded player footsteps/breathing to duplicate; the current cue is synthesized.
 - Full 3D rear-channel audio positioning.
-- A final physical smartwatch model and screen.
+- A higher-fidelity wrist, strap, casing, and screen animation; the current camera-attached 3D watch is a first implementation.
 - Separate detailed shadow meshes for each faction or animal archetype.
 
 ### 20.3 Taboo ingestion: permanent world-state consequence
@@ -652,3 +652,17 @@ World.ScentAndDisturbanceEvidence -> WildlifeAndFaction.Investigation
 ```
 
 The dependency map is a design contract, not a claim that every arrow is currently connected. Each system should publish typed events, own its own state, and avoid circular imports. World-time progression, persistence, and server authority remain the long-term source of truth for multiplayer.
+
+
+## 22. Diegetic interface rule — the watch, not a HUD
+
+WILDLANDS has no traditional persistent HUD. This is a hard presentation rule, not a visual preference:
+- No permanent health, hunger, thirst, stamina, sanity, or other status bars.
+- No always-visible minimap, floating objective markers, location labels, crosshair, or permanent clock strip.
+- The physical smartwatch is the primary biometric and diagnostic interface. The player deliberately raises and reads it; information is not permanently overlaid on the world.
+- The physical backpack owns inventory. The physical field notebook owns learned discoveries. The compass and paper map own navigation. Body inspection owns localized injury/condition checks.
+- Environmental sound, visible weather, animal behavior, and world evidence communicate danger and context.
+
+The current implementation milestone removes the old five-bar HUD, location label, center crosshair, and permanent day/time strip. A camera-attached 3D wrist/watch prototype is raised and lowered with **H**. Its screen presents health, hydration, nutrition, composure, time, and concise diagnostic warnings. Stamina remains hidden. Terror corrupts the watch screen itself rather than a separate overlay.
+
+Temporary prototype exceptions are explicitly not final design: the F3 developer panel is test-only, while the current inventory, crafting, and journal panels are scaffolding awaiting replacement by the physical backpack, hand-assembly surface, and notebook. Do not expand those overlays into a conventional game HUD.
