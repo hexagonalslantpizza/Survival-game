@@ -782,8 +782,8 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   document.addEventListener("keydown", keydown);
   document.addEventListener("mousedown", click);
 
-  function update(delta) {
-    state.fps = delta > 0 ? 1 / delta : 0;
+  function update(delta, frameDelta = delta) {
+    state.fps = frameDelta > 0 ? 1 / frameDelta : 0;
     updateSurvival(delta);
     updateRain(delta);
     updateAnimals(delta);
