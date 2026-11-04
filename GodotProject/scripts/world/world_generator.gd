@@ -57,6 +57,8 @@ func _create_materials() -> void:
 		_material(Color(0.28, 0.45, 0.26), 0.9),
 		_material(Color(0.14, 0.29, 0.19), 0.95)
 	]
+	for material in fern_materials:
+		material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	rock_materials = [
 		_material(Color(0.47, 0.48, 0.43), 0.96),
 		_material(Color(0.40, 0.42, 0.38), 1.0)
@@ -240,7 +242,6 @@ func _create_rock(x: float, z: float, scale_factor: float) -> void:
 	rock.material_override = rock_materials[random.randi_range(0, rock_materials.size() - 1)]
 	rock.scale = Vector3(scale_factor * random.randf_range(0.9, 1.4), scale_factor * random.randf_range(0.55, 0.9), scale_factor * random.randf_range(0.8, 1.25))
 	rock.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	rock.receive_shadow = true
 	group.add_child(rock)
 
 	var body := StaticBody3D.new()
