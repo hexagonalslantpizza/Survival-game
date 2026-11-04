@@ -54,17 +54,6 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   const ui = document.createElement("div");
   ui.id = "survival-ui";
   document.body.appendChild(ui);
-  topHud.style.display = "none";
-  hint.style.display = "none";
-  bottom.style.display = "none";
-  function syncHudVisibility() {
-    const visible = isLocked();
-    topHud.style.display = visible ? "block" : "none";
-    hint.style.display = visible ? "block" : "none";
-    bottom.style.display = visible ? "block" : "none";
-  }
-  document.addEventListener("pointerlockchange", syncHudVisibility);
-
   const style = document.createElement("style");
   style.textContent = [
     "#survival-ui{position:fixed;inset:0;z-index:8;pointer-events:none;font:13px Arial,sans-serif;color:#edf1e7}",
@@ -119,6 +108,17 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   const bottom = document.createElement("div");
   bottom.className = "surv-bottom";
   ui.appendChild(bottom);
+
+  topHud.style.display = "none";
+  hint.style.display = "none";
+  bottom.style.display = "none";
+  function syncHudVisibility() {
+    const visible = isLocked();
+    topHud.style.display = visible ? "block" : "none";
+    hint.style.display = visible ? "block" : "none";
+    bottom.style.display = visible ? "block" : "none";
+  }
+  document.addEventListener("pointerlockchange", syncHudVisibility);
   const panelRoot = document.createElement("div");
   ui.appendChild(panelRoot);
   const debugRoot = document.createElement("div");
