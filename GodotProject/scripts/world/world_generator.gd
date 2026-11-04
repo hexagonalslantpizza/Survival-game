@@ -89,7 +89,6 @@ func _create_terrain() -> void:
 				color = Color(0.29 + variation, 0.39 + variation, 0.22)
 			surface.set_color(color)
 			surface.add_vertex(Vector3(x, y, z))
-	surface.index()
 	var row: int = GRID + 1
 	for z_index in range(GRID):
 		for x_index in range(GRID):
