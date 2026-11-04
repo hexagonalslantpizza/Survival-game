@@ -618,6 +618,8 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     action(testing, "TEST BOTFLY LIFECYCLE", () => { exposeToBotflyScent(state.ecology, 10, false); advanceEcology(state.ecology, 48); notify("Debug: body inspection should detect a treatable parasite."); });
     action(testing, "APPLY RESIN / COMPLETE TREATMENT", () => { if (applyResinToBotfly(state.ecology)) { advanceEcology(state.ecology, 2); completeBotflyExtraction(state.ecology); notify("The fictional parasite treatment is complete."); } else notify("No active condition is ready for this treatment."); });
     action(testing, "TEST INDUSTRIAL SMOKE", () => { emitIndustrialSmoke(state.ecology, 55); notify("Debug: regional smoke pollution increased."); });
+    action(testing, "ADVANCE ECOLOGY 12 HOURS", () => { advanceEcology(state.ecology, 12); notify("Debug: ecology advanced by 12 game-hours."); });
+    action(testing, "ADVANCE ECOLOGY 48 HOURS", () => { advanceEcology(state.ecology, 48); notify("Debug: ecology advanced by 48 game-hours."); });
     action(testing, "DAMAGE PLAYER (-25)", () => { damagePlayer(25, "Debug damage"); });
     action(testing, "TEST FALL DAMAGE", () => { applyFallDamage(22); });
     action(testing, "HEAL PLAYER", () => { state.health = 100; state.wounds = []; state.infection = 0; state.parasites = 0; });
