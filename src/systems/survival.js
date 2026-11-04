@@ -9,7 +9,7 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     showInventory: false, activePanel: "", buildMode: "", message: "Explore. Press E near something to interact.",
     messageTime: 5, kills: 0, gathered: 0, crafted: 0, damageTaken: 0,
     thirstDamageTimer: 0, hungerDamageTimer: 0, infectionTimer: 0,
-    temperature: 28, wetness: 0, fireCount: 0
+    temperature: 28, wetness: 0, fireCount: 0, weather: "clear"
   };
 
   const itemInfo = {
@@ -52,6 +52,9 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
   const ui = document.createElement("div");
   ui.id = "survival-ui";
   document.body.appendChild(ui);
+  topHud.style.display = "none";
+  hint.style.display = "none";
+  bottom.style.display = "none";
 
   const style = document.createElement("style");
   style.textContent = [
@@ -329,8 +332,8 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
   function makeAnimal(type, x, z) {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({ color: type === "jaguar" ? 0xc69b50 : type === "caiman" ? 0x53634a : type === "bird" ? 0x9b5941 : 0x806e50, roughness: 0.95 });
-    const body = new THREE.Mesh(new THREE.SphereGeometry(type === "jaguar" ? 0.75 : 0.48, 12, 9), bodyMat);
-    body.scale.set(type === "caiman" ? 1.8 : 1.35, type === "caiman" ? 0.55 : 0.8, type === "bird" ? 0.8 : 1.15);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(type === "jaguar" ? 0.75 : type === "snake" ? 0.25 : 0.48, 12, 9), bodyMat);
+    body.scale.set(type === "caiman" || type === "snake" ? 1.8 : type === "frog" ? 0.85 : 1.35, type === "caiman" || type === "snake" ? 0.38 : 0.8, type === "bird" ? 0.8 : 1.15);
     body.position.y = type === "bird" ? 0.8 : 0.55;
     group.add(body);
     const head = new THREE.Mesh(new THREE.SphereGeometry(type === "jaguar" ? 0.34 : 0.22, 10, 8), bodyMat);
@@ -346,9 +349,10 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     scene.add(group);
     animals.push({ type, mesh: group, hp: type === "jaguar" ? 70 : 35, speed: type === "jaguar" ? 1.7 : rand(0.5, 1.2), direction: rand(0, Math.PI * 2), timer: rand(2, 7), alive: true, attackCooldown: 0 });
   }
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 16; i++) {
     const x = rand(-worldSize * 0.4, worldSize * 0.4), z = rand(-worldSize * 0.4, worldSize * 0.4);
-    makeAnimal(i === 0 ? "jaguar" : i < 3 ? "caiman" : i < 6 ? "bird" : "armadillo", x, z);
+    const type = i === 0 ? "jaguar" : i < 3 ? "caiman" : i < 6 ? "bird" : i < 9 ? "armadillo" : i < 12 ? "frog" : "snake";
+    makeAnimal(type, x, z);
   }
 
   function nearestTarget(maxDistance = 3.2) {
@@ -403,8 +407,8 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     }
   }
 
-  function nearestAnimal() {
-    let best = null, distance = 3.4;
+  function nearestAnimal(maxDistance = 3.4) {
+    let best = null, distance = maxDistance;
     for (const animal of animals) {
       if (!animal.alive) continue;
       const d = camera.position.distanceTo(animal.mesh.position);
@@ -413,10 +417,12 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     return best;
   }
   function attackAnimal() {
-    const animal = nearestAnimal();
+    const ranged = count("bow") > 0 && count("arrow") > 0;
+    const animal = nearestAnimal(ranged ? 18 : 3.4);
     if (!animal) return;
-    if (count("spear") < 1) { notify("You need a crafted spear to hunt."); return; }
-    animal.hp -= 35;
+    if (ranged) { state.inventory.arrow -= 1; animal.hp -= 25; }
+    else if (count("spear") > 0) animal.hp -= 35;
+    else { notify("You need a crafted spear, or a bow and arrow, to hunt."); return; }
     notify("You hit the " + animal.type + ".");
     if (animal.hp <= 0) {
       animal.alive = false;
@@ -525,6 +531,11 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     diff.value = state.difficulty;
     diff.addEventListener("change", () => state.difficulty = diff.value);
     const diffRow = document.createElement("div"); diffRow.className = "debug-row"; diffRow.append("Difficulty", diff); flags.appendChild(diffRow);
+    const weather = document.createElement("select");
+    ["clear","rain"].forEach(v => { const o = document.createElement("option"); o.value = v; o.textContent = v.toUpperCase(); weather.appendChild(o); });
+    weather.value = state.weather;
+    weather.addEventListener("change", () => { state.weather = weather.value; notify("Weather set to " + state.weather + "."); });
+    const weatherRow = document.createElement("div"); weatherRow.className = "debug-row"; weatherRow.append("Weather", weather); flags.appendChild(weatherRow);
     const inventory = box("SPAWN ITEMS");
     const itemSelect = document.createElement("select");
     Object.keys(itemInfo).forEach(id => { const o = document.createElement("option"); o.value = id; o.textContent = itemInfo[id][0]; itemSelect.appendChild(o); });
@@ -573,11 +584,13 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
       const dx = camera.position.x - animal.mesh.position.x;
       const dz = camera.position.z - animal.mesh.position.z;
       const distance = Math.hypot(dx, dz);
-      if (animal.type === "jaguar" && distance < 9) {
+      if ((animal.type === "jaguar" && distance < 9) || (animal.type === "caiman" && distance < 2.0) || (animal.type === "snake" && distance < 1.5)) {
         animal.direction = Math.atan2(dx, dz);
-        if (distance < 1.9 && animal.attackCooldown <= 0) {
+        const attackRange = animal.type === "jaguar" ? 1.9 : animal.type === "caiman" ? 1.8 : 1.35;
+        if (distance < attackRange && animal.attackCooldown <= 0) {
           animal.attackCooldown = 3.5;
-          damagePlayer(8, "A jaguar struck you! Create distance.");
+          const damage = animal.type === "jaguar" ? 8 : animal.type === "caiman" ? 7 : 4;
+          damagePlayer(damage, "A " + animal.type + " injured you! Move away.");
         }
       } else if (distance < 7 && animal.type !== "caiman") {
         animal.direction = Math.atan2(-dx, -dz);
@@ -600,6 +613,14 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
   function updateSurvival(delta) {
     state.time += delta * 0.025;
     if (state.time >= 24) { state.time -= 24; state.day += 1; }
+    if (state.weather === "rain") state.wetness = Math.min(100, state.wetness + delta * 2.5);
+    else state.wetness = Math.max(0, state.wetness - delta * 0.5);
+    state.temperature = state.weather === "rain" ? 23 : 28;
+    const sun = scene.children.find(child => child.isDirectionalLight);
+    const hemi = scene.children.find(child => child.isHemisphereLight);
+    const daylight = Math.max(0, Math.sin(((state.time - 6) / 12) * Math.PI));
+    if (sun) { sun.intensity = 0.12 + daylight * 2.0; sun.position.set(-65 + Math.cos(state.time * Math.PI / 12) * 35, 20 + daylight * 90, 35); }
+    if (hemi) hemi.intensity = 0.35 + daylight * 1.2;
     if (!state.survivalEnabled) return;
     const difficulty = state.difficulty === "easy" ? 0.65 : state.difficulty === "hard" ? 1.55 : 1;
     state.hunger = Math.max(0, state.hunger - delta * 0.075 * difficulty);
@@ -628,6 +649,10 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
   }
 
   function renderHud() {
+    const active = isLocked();
+    topHud.style.display = active ? "block" : "none";
+    hint.style.display = active ? "block" : "none";
+    bottom.style.display = active ? "block" : "none";
     const bars = ["health","hunger","thirst","stamina","sanity"];
     const labels = { health:"HEALTH", hunger:"HUNGER", thirst:"THIRST", stamina:"STAMINA", sanity:"SANITY" };
     const colors = { health:"#bd7468", hunger:"#c7a66b", thirst:"#76a9bb", stamina:"#a9c48c", sanity:"#9b91bd" };
@@ -636,6 +661,7 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     const cond = document.getElementById("surv-conditions");
     if (cond) {
       const tags = [];
+      if (state.weather === "rain") tags.push("RAIN");
       if (state.wounds.length) tags.push("WOUNDS " + state.wounds.length);
       if (state.infection > 5) tags.push("INFECTION");
       if (state.parasites > 5) tags.push("PARASITES");
