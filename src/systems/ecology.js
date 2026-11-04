@@ -102,6 +102,7 @@ export function advanceJaguarState(animal, context, delta) {
   const distance = Math.max(0, context.distance);
   const fireDistance = Number.isFinite(context.fireDistance) ? context.fireDistance : Infinity;
   const sprinting = Boolean(context.playerSprinting);
+  const scentStrength = Math.max(0, context.scentStrength ?? 0);
   animal.aiState ??= "roaming";
   animal.warningTimer ??= 0;
 
@@ -115,9 +116,12 @@ export function advanceJaguarState(animal, context, delta) {
     return animal.aiState;
   }
   if (distance > 22) {
-    animal.aiState = "roaming";
+    animal.aiState = scentStrength > 0.08 ? "investigating" : "roaming";
     animal.warningTimer = 0;
     return animal.aiState;
+  }
+  if (animal.aiState === "investigating" && scentStrength <= 0.08) {
+    animal.aiState = "roaming";
   }
   if (animal.aiState === "pouncing") return animal.aiState;
   if (animal.aiState === "warning") {
