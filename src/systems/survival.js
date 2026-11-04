@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createEcologyState, exposeToAmoebicParasite, absorbCarbohydrates, advanceEcology, emitIndustrialSmoke, exposeToBotflyScent, applyResinToBotfly, completeBotflyExtraction } from "./ecology.js";
+import { createEcologyState, exposeToAmoebicParasite, absorbCarbohydrates, advanceEcology, emitIndustrialSmoke, exposeToBotflyScent, applyResinToBotfly, completeBotflyExtraction, advanceJaguarState } from "./ecology.js";
 
 export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, trees, solidObstacles, isLocked }) {
   const state = {
@@ -53,6 +53,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   const animals = [];
   const resources = [];
   const placedObjects = [];
+  const scentSources = [];
   const ui = document.createElement("div");
   ui.id = "survival-ui";
   document.body.appendChild(ui);
@@ -386,7 +387,8 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   }
   for (let i = 0; i < 16; i++) {
     const x = rand(-worldSize * 0.4, worldSize * 0.4), z = rand(-worldSize * 0.4, worldSize * 0.4);
-    const type = i === 0 ? "jaguar" : i < 3 ? "caiman" : i < 6 ? "bird" : i < 9 ? "armadillo" : i < 12 ? "frog" : "snake";
+    const night = state.time >= 19 || state.time <= 5;
+    const type = i === 0 && night && Math.random() < 0.03 ? "jaguar" : i < 3 ? "caiman" : i < 6 ? "bird" : i < 9 ? "armadillo" : i < 12 ? "frog" : "snake";
     makeAnimal(type, x, z);
   }
 
@@ -480,6 +482,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       addItem("hide", 1);
       if (animal.type === "bird") addItem("feather", 2);
       state.kills += 1;
+      scentSources.push({ x: animal.mesh.position.x, z: animal.mesh.position.z, remainingHours: 72, intensity: 1 });
       discover("Wildlife: " + animal.type, "You encountered and hunted a " + animal.type + ".");
       notify("Animal harvested. Cook the meat before eating.");
     }
@@ -735,6 +738,21 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   function updateSurvival(delta) {
     state.time += delta * 0.025;
     if (state.survivalEnabled) {
+      const gameHoursDelta = delta * 0.025;
+      const gameMinutesDelta = gameHoursDelta * 60;
+      for (let i = scentSources.length - 1; i >= 0; i--) {
+        const source = scentSources[i];
+        source.remainingHours -= gameHoursDelta;
+        if (source.remainingHours <= 0) scentSources.splice(i, 1);
+      }
+      const nearCarcass = scentSources.some(source => Math.hypot(camera.position.x - source.x, camera.position.z - source.z) < 7);
+      const shelteredBySmoke = placedObjects.some(object => object.active && object.kind === "fire" &&
+        Math.hypot(camera.position.x - object.mesh.position.x, camera.position.z - object.mesh.position.z) < 12);
+      const previousBotflyPhase = state.ecology.botfly.phase;
+      exposeToBotflyScent(state.ecology, nearCarcass ? gameMinutesDelta : 0, shelteredBySmoke);
+      if (previousBotflyPhase === "clear" && state.ecology.botfly.phase === "developing") {
+        notify("Persistent exposure near an unprotected carcass. Check your body after resting.");
+      }
       const previousAmoebicPhase = state.ecology.amoebic.phase;
       advanceEcology(state.ecology, delta * 0.025);
       if (previousAmoebicPhase === "incubating" && state.ecology.amoebic.phase === "active") {
@@ -814,6 +832,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
       "Inventory types: " + Object.keys(state.inventory).filter(k => count(k)>0).length,
       "Wounds: " + state.wounds.length + " | Infection: " + state.infection.toFixed(1) + " | Parasites: " + state.parasites.toFixed(1),
       "Amoebic: " + state.ecology.amoebic.phase + " (" + state.ecology.amoebic.incubationHoursRemaining.toFixed(1) + "h) | Botfly: " + state.ecology.botfly.phase,
+      "Carcass scent sources: " + scentSources.length,
       "Air pollution: " + state.ecology.airPollutionLoad.toFixed(1) + " | Above threshold: " + state.ecology.hoursAbovePollutionThreshold.toFixed(1) + "h | Sef-Ilun: " + state.ecology.sefIlunStance,
       "Animals harvested: " + state.kills + " | Gather actions: " + state.gathered + " | Crafts: " + state.crafted,
       "Difficulty: " + state.difficulty + " | Survival: " + state.survivalEnabled + " | God mode: " + state.godMode,
