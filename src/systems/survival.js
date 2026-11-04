@@ -125,6 +125,7 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
     notify("Journal updated: " + name);
   }
   function makePanel(title, subtitle, content) {
+    if (isLocked()) document.exitPointerLock();
     panelRoot.innerHTML = "";
     const panel = document.createElement("section");
     panel.className = "surv-panel";
@@ -364,7 +365,7 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
       bestDistance = distance;
     }
     for (const object of placedObjects) {
-      if (object.kind !== "fire" || !object.active) continue;
+      if (!object.active) continue;
       const distance = origin.distanceTo(object.mesh.position);
       if (distance < bestDistance) { best = object; bestDistance = distance; }
     }
@@ -374,17 +375,23 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
   function interact() {
     const target = nearestTarget();
     if (!target) { notify("Nothing close enough to interact with."); return; }
-    if (target.kind === "water") {
+    if (target.kind === "shelter") {
+      openRest();
+    } else if (target.kind === "water") {
       addItem("dirty_water", 1);
       discover("Freshwater pool", "A natural water source. Filter or boil water before drinking when possible.");
       notify("Collected unfiltered water. Be careful drinking it.");
     } else if (target.kind === "fire") {
       const raw = count("raw_meat");
-      if (raw > 0) {
+      if (count("dirty_water") > 0) {
+        state.inventory.dirty_water -= 1;
+        addItem("clean_water", 1);
+        notify("Boiled water is now safe to drink.");
+      } else if (raw > 0) {
         state.inventory.raw_meat -= 1;
         addItem("cooked_meat", 1);
         notify("Cooked one piece of meat.");
-      } else notify("The fire is warm. Bring raw meat here to cook it.");
+      } else notify("The fire is warm. Bring raw meat or unfiltered water here.");
     } else if (target.kind === "shelter") {
       openRest();
     } else {
@@ -475,6 +482,7 @@ export function createSurvivalSystems({ scene, camera, player, terrainHeight, wo
 
   function toggleDebug() {
     if (debugRoot.childElementCount) { debugRoot.innerHTML = ""; return; }
+    if (isLocked()) document.exitPointerLock();
     panelRoot.innerHTML = "";
     const panel = document.createElement("section");
     panel.className = "surv-debug";
