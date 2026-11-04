@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createEcologyState, exposeToAmoebicParasite, absorbCarbohydrates, advanceEcology, emitIndustrialSmoke, exposeToBotflyScent, applyResinToBotfly, completeBotflyExtraction, advanceJaguarState } from "./ecology.js";
+import { createEcologyState, exposeToAmoebicParasite, absorbCarbohydrates, advanceEcology, emitIndustrialSmoke, exposeToBotflyScent, applyResinToBotfly, completeBotflyExtraction, advanceJaguarState, shouldSpawnJaguar } from "./ecology.js";
 
 export function createSurvivalSystems({ scene, camera, player, renderer, terrainHeight, worldSize, trees, solidObstacles, isLocked }) {
   const state = {
@@ -54,6 +54,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   const resources = [];
   const placedObjects = [];
   const scentSources = [];
+  let jaguarSpawnCheckTimer = 0;
   const ui = document.createElement("div");
   ui.id = "survival-ui";
   document.body.appendChild(ui);
@@ -387,8 +388,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   }
   for (let i = 0; i < 16; i++) {
     const x = rand(-worldSize * 0.4, worldSize * 0.4), z = rand(-worldSize * 0.4, worldSize * 0.4);
-    const night = state.time >= 19 || state.time <= 5;
-    const type = i === 0 && night && Math.random() < 0.03 ? "jaguar" : i < 3 ? "caiman" : i < 6 ? "bird" : i < 9 ? "armadillo" : i < 12 ? "frog" : "snake";
+    const type = i < 3 ? "caiman" : i < 6 ? "bird" : i < 9 ? "armadillo" : i < 12 ? "frog" : "snake";
     makeAnimal(type, x, z);
   }
 
@@ -642,6 +642,20 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
   }
 
   function updateAnimals(delta) {
+    jaguarSpawnCheckTimer -= delta;
+    if (jaguarSpawnCheckTimer <= 0) {
+      jaguarSpawnCheckTimer = 60;
+      const isNight = state.time >= 19 || state.time <= 5;
+      const existingJaguarCount = animals.filter(animal => animal.alive && animal.type === "jaguar").length;
+      if (shouldSpawnJaguar({ isNight, existingJaguarCount })) {
+        const angle = rand(0, Math.PI * 2);
+        const radius = rand(25, 40);
+        const x = THREE.MathUtils.clamp(camera.position.x + Math.sin(angle) * radius, -worldSize * 0.42, worldSize * 0.42);
+        const z = THREE.MathUtils.clamp(camera.position.z + Math.cos(angle) * radius, -worldSize * 0.42, worldSize * 0.42);
+        makeAnimal("jaguar", x, z);
+        notify("A distant movement shifts through the trees.");
+      }
+    }
     for (const animal of animals) {
       if (!animal.alive) continue;
       animal.timer -= delta;
