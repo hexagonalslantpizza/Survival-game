@@ -8,7 +8,7 @@ This is the Godot 4.7.2 implementation of WILDLANDS.
 2. Choose **Import** in the Project Manager.
 3. Select this folder's `project.godot` file.
 4. Import and open the project.
-5. Press **F6** only when testing a selected scene; press **F6** is not needed for the game. Press **F5** to run the main scene.
+5. Press **F5** to run the main scene.
 
 The first run generates the current prototype terrain and vegetation. Click the game window to capture the mouse. Use WASD to move, mouse to look, Shift to sprint, Space to jump, and Escape to release the mouse. Click again to recapture it.
 
