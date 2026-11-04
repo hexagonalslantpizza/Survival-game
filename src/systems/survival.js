@@ -609,6 +609,7 @@ export function createSurvivalSystems({ scene, camera, player, renderer, terrain
     action(testing, "ADD INFECTION", () => { state.infection = Math.min(100, state.infection + 25); });
     action(testing, "ADD PARASITES", () => { state.parasites = Math.min(100, state.parasites + 25); });
     action(testing, "DAMAGE PLAYER (-25)", () => { damagePlayer(25, "Debug damage"); });
+    action(testing, "TEST FALL DAMAGE", () => { applyFallDamage(22); });
     action(testing, "HEAL PLAYER", () => { state.health = 100; state.wounds = []; state.infection = 0; state.parasites = 0; });
     action(testing, "RESET SURVIVAL STATS", () => { state.health=100;state.hunger=100;state.thirst=100;state.stamina=100;state.sanity=100;state.infection=0;state.parasites=0;state.wounds=[]; });
     action(testing, "CLEAR INVENTORY", () => { state.inventory = {}; });
