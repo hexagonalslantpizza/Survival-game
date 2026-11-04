@@ -319,9 +319,11 @@ function updatePlayer(delta) {
     const minDistance = obstacle.radius + 0.38;
     const distanceSq = dx * dx + dz * dz;
     if (distanceSq < minDistance * minDistance) {
-      const distance = Math.sqrt(distanceSq) || 0.001;
-      nextX = obstacle.x + (dx / distance) * minDistance;
-      nextZ = obstacle.z + (dz / distance) * minDistance;
+      const distance = Math.sqrt(distanceSq);
+      const pushX = distance > 0.001 ? dx / distance : 1;
+      const pushZ = distance > 0.001 ? dz / distance : 0;
+      nextX = obstacle.x + pushX * minDistance;
+      nextZ = obstacle.z + pushZ * minDistance;
     }
   }
 
