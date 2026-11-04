@@ -74,3 +74,14 @@ test("jaguar shadows at distance, warns before pouncing, and retreats from nearb
   assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 30, playerSprinting: true }, 2.5), "pouncing");
   assert.equal(advanceJaguarState(jaguar, { distance: 5, fireDistance: 4 }, 0.1), "retreating");
 });
+
+test("botfly exposure resets when the player leaves the scent zone or reaches smoke shelter", () => {
+  const ecology = createEcologyState();
+  exposeToBotflyScent(ecology, 6, false);
+  exposeToBotflyScent(ecology, 0, false);
+  assert.equal(ecology.botfly.exposureMinutes, 0);
+  exposeToBotflyScent(ecology, 8, false);
+  exposeToBotflyScent(ecology, 3, true);
+  assert.equal(ecology.botfly.exposureMinutes, 0);
+  assert.equal(ecology.botfly.phase, "clear");
+});
