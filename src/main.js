@@ -258,7 +258,9 @@ const player = {
   pitch: 0,
   speed: 5.0,
   sprintSpeed: 8.0,
-  eyeHeight: 1.72
+  eyeHeight: 1.72,
+  verticalVelocity: 0,
+  grounded: true
 };
 const keys = new Set();
 let locked = false;
@@ -336,7 +338,23 @@ function updatePlayer(delta) {
   camera.position.x = nextX;
   camera.position.z = nextZ;
   const floor = terrainHeight(camera.position.x, camera.position.z) + player.eyeHeight;
-  camera.position.y = THREE.MathUtils.damp(camera.position.y, floor, 16, delta);
+  if (keys.has("Space") && player.grounded) {
+    player.verticalVelocity = 7.5;
+    player.grounded = false;
+  }
+  if (!player.grounded) {
+    player.verticalVelocity -= 20 * delta;
+    camera.position.y += player.verticalVelocity * delta;
+    if (camera.position.y <= floor) {
+      const impactSpeed = -player.verticalVelocity;
+      camera.position.y = floor;
+      player.verticalVelocity = 0;
+      player.grounded = true;
+      if (impactSpeed > 13) survival.applyFallDamage(impactSpeed);
+    }
+  } else {
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, floor, 16, delta);
+  }
   camera.rotation.order = "YXZ";
   camera.rotation.y = player.yaw;
   camera.rotation.x = player.pitch;
